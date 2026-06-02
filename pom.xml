@@ -10,6 +10,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>ai-data-common</module>
+        <module>ai-data-model</module>
+        <module>ai-data-service-client</module>
         <module>ai-data-gateway</module>
         <module>ai-data-user</module>
         <module>ai-data-processor</module>
@@ -27,7 +29,6 @@
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <hutool-version>5.8.38</hutool-version>
         <lombok-version>1.18.30</lombok-version>
-        <mysql-connector.version>8.0.33</mysql-connector.version>
     </properties>
 
     <dependencyManagement>
@@ -67,7 +68,7 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok-version}</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
             <!-- MyBatis-Plus -->
             <dependency>
@@ -75,16 +76,22 @@
                 <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
-            <!-- MySQL -->
-            <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-                <version>${mysql-connector.version}</version>
-            </dependency>
             <!-- common module -->
             <dependency>
                 <groupId>com.yuan</groupId>
                 <artifactId>ai-data-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- model module -->
+            <dependency>
+                <groupId>com.yuan</groupId>
+                <artifactId>ai-data-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- service-client module -->
+            <dependency>
+                <groupId>com.yuan</groupId>
+                <artifactId>ai-data-service-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

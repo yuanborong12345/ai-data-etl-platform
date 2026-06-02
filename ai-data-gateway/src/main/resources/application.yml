@@ -14,15 +14,23 @@ spring:
           uri: lb://ai-data-user
           predicates:
             - Path=/api/user/**
+          filters:
+            - StripPrefix=1
         - id: ai-data-processor
           uri: lb://ai-data-processor
           predicates:
             - Path=/api/processor/**
+          filters:
+            - StripPrefix=1
         - id: ai-data-intelligence
           uri: lb://ai-data-intelligence
           predicates:
             - Path=/api/intelligence/**
+          filters:
+            - StripPrefix=1
         - id: ai-data-monitor
           uri: lb://ai-data-monitor
           predicates:
             - Path=/api/monitor/**
+          filters:
+            - StripPrefix=1

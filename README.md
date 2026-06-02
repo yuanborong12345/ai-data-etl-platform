@@ -6,13 +6,27 @@
 
 ```
 ai-data-etl-platform (父工程，管理依赖版本)
-├── ai-data-common       (公共工具包，不单独启动)
-├── ai-data-gateway      (网关服务，端口 8000)
-├── ai-data-user         (用户与系统管理服务，端口 8010)
-├── ai-data-processor    (数据解析与 ETL 服务，端口 8020)
-├── ai-data-intelligence (AI 智能分析服务，端口 8030)
-└── ai-data-monitor      (监控与 Token 审计服务，端口 8040)
+├── ai-data-common           (公共工具包，不单独启动)
+├── ai-data-model            (共享实体/DTO，不单独启动)
+├── ai-data-service-client   (Feign 接口，不单独启动)
+├── ai-data-gateway          (网关服务，端口 8000)
+├── ai-data-user             (用户与系统管理服务，端口 8010)
+├── ai-data-processor        (数据解析与 ETL 服务，端口 8020)
+├── ai-data-intelligence     (AI 智能分析服务，端口 8030)
+└── ai-data-monitor          (监控与 Token 审计服务，端口 8040)
 ```
+
+## 模块依赖链
+
+```
+ai-data-service-client (Feign 接口)
+        ↓
+ai-data-model (共享 DTO/实体)
+        ↓
+ai-data-common (工具类、统一返回体、异常)
+```
+
+业务服务模块根据需求依赖 `ai-data-service-client`（调用其他服务）和/或 `ai-data-model`（共享实体）。
 
 ## 技术栈
 
@@ -37,8 +51,23 @@ ai-data-etl-platform (父工程，管理依赖版本)
 纯 Java 依赖包，不对外提供网络服务。
 
 - 封装全局统一返回对象 `Result<T>`、全局异常处理类
-- 存放跨模块传输的 DTO（RabbitMQ 消息实体、Token 计费消息实体）
+- 全局异常处理器 `GlobalExceptionHandler`
 - 工具类封装（EasyExcel 监听器基类、RSA 签名工具等）
+
+### ai-data-model (共享实体/DTO 模型)
+
+纯依赖包，存放跨服务公用的实体和 DTO。
+
+- 公用的实体类（如 `UserDTO`）
+- RabbitMQ / Token 计费等消息体
+- 依赖 `ai-data-common`（继承 `BaseEntity`、引用 `Result` 等）
+
+### ai-data-service-client (Feign 接口模块)
+
+纯依赖包，只放接口不放实现。
+
+- 定义跨服务调用的 Feign 接口（如 `UserFeignClient`）
+- 引用 `ai-data-model` 的 DTO 作为接口参数/返回值
 
 ### ai-data-gateway (微服务统一网关)
 
