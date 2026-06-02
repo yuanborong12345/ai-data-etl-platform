@@ -16,12 +16,6 @@ spring:
             - Path=/api/user/**
           filters:
             - StripPrefix=1
-        - id: ai-data-processor
-          uri: lb://ai-data-processor
-          predicates:
-            - Path=/api/processor/**
-          filters:
-            - StripPrefix=1
         - id: ai-data-intelligence
           uri: lb://ai-data-intelligence
           predicates:

@@ -12,11 +12,6 @@
     <artifactId>ai-data-model</artifactId>
 
     <dependencies>
-        <!-- Common (BaseEntity、常量等) -->
-        <dependency>
-            <groupId>com.yuan</groupId>
-            <artifactId>ai-data-common</artifactId>
-        </dependency>
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

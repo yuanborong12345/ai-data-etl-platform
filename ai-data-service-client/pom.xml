@@ -17,6 +17,11 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
+        <!-- Common (BaseResponse 等返回值类型) -->
+        <dependency>
+            <groupId>com.yuan</groupId>
+            <artifactId>ai-data-common</artifactId>
+        </dependency>
         <!-- Model (DTO 引用) -->
         <dependency>
             <groupId>com.yuan</groupId>

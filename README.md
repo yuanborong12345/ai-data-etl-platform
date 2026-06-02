@@ -19,14 +19,14 @@ ai-data-etl-platform (父工程，管理依赖版本)
 ## 模块依赖链
 
 ```
-ai-data-service-client (Feign 接口)
-        ↓
-ai-data-model (共享 DTO/实体)
-        ↓
-ai-data-common (工具类、统一返回体、异常)
+ai-data-model (共享 DTO/实体)     ai-data-common (工具类、返回体、异常)
+    ─────────── 完全平行、互不依赖 ───────────
+        ↓                          ↓
+    ai-data-service-client (Feign 接口)
+        显式依赖 model(DTO) + common(BaseResponse)
 ```
 
-业务服务模块根据需求依赖 `ai-data-service-client`（调用其他服务）和/或 `ai-data-model`（共享实体）。
+业务服务模块根据需要显式声明依赖：`ai-data-model`（共享实体）、`ai-data-common`（工具类）、`ai-data-service-client`（Feign 接口）。
 
 ## 技术栈
 
@@ -50,69 +50,74 @@ ai-data-common (工具类、统一返回体、异常)
 
 纯 Java 依赖包，不对外提供网络服务。
 
-- 封装全局统一返回对象 `Result<T>`、全局异常处理类
-- 全局异常处理器 `GlobalExceptionHandler`
-- 工具类封装（EasyExcel 监听器基类、RSA 签名工具等）
+- 封装全局统一返回对象 `BaseResponse<T>`、全局异常处理类
+  - 全局异常处理器 `GlobalExceptionHandler`
+  - 工具类封装（EasyExcel 监听器基类、RSA 签名工具等）
 
 ### ai-data-model (共享实体/DTO 模型)
 
-纯依赖包，存放跨服务公用的实体和 DTO。
+纯依赖包，零外部依赖，存放跨服务公用的实体和 DTO。
 
-- 公用的实体类（如 `UserDTO`）
+- 公用的实体类 / DTO（如 `UserDTO`）
 - RabbitMQ / Token 计费等消息体
-- 依赖 `ai-data-common`（继承 `BaseEntity`、引用 `Result` 等）
+- **不依赖任何其他模块**，引入方不会携带任何传递性依赖包袱
 
 ### ai-data-service-client (Feign 接口模块)
 
 纯依赖包，只放接口不放实现。
 
 - 定义跨服务调用的 Feign 接口（如 `UserFeignClient`）
-- 引用 `ai-data-model` 的 DTO 作为接口参数/返回值
+- 显式依赖 `ai-data-model`（接口参数/返回值用到的 DTO）
+- 显式依赖 `ai-data-common`（接口返回值用到的 `BaseResponse`）
+- **不会通过 model 透传 common 的依赖**，两个依赖各自独立声明
 
 ### ai-data-gateway (微服务统一网关)
 
 系统的唯一入口，路由分发（端口 `8000`）。
 
 - 集成 Nacos 动态实现路由转发到后端各个微服务
-- 集成 Sentinel，对高频 Excel 上传请求进行限流，保护 Processor 服务
-- 基于 WebFlux 响应式编程模型
+  - 集成 Sentinel，对高频 Excel 上传请求进行限流，保护 Processor 服务
+  - 基于 WebFlux 响应式编程模型
 
-### ai-data-user (用户与系统管理微服务)
+### ai-data-user (用户与业务聚合微服务)
 
-基础业务服务（端口 `8010`）。
+用户面对的业务服务（端口 `8010`）。
 
 - 用户注册、登录、权限管理（JWT）
-- 文件元数据历史记录管理（文件名、上传时间、解析状态、AI 分析状态、下载链接）
-- 文件状态机维护：上传中 -> 解析中 -> AI 分析中 -> 分析完成 -> 失败
+- **统一收拢文件上传入口**，接收前端上传的 Excel 文件
+- 文件元数据管理 + **状态机维护**：上传中 → 解析中 → AI 分析中 → 完成/失败
 - 利用 Redis 分布式锁防止状态并发乱序
+- 上传完成后生成 task_id，将存储路径投递到 RabbitMQ **Data-Queue**，通知 Processor 消费
+- 消费 AI 分析结果，更新文件状态，提供文件历史查询和下载
 
-### ai-data-processor (数据解析与 ETL 微服务)
+### ai-data-processor (数据解析与 ETL 管道)
 
-数据密集型核心服务（端口 `8020`）。
+数据密集型管道服务（端口 `8020`，通常不对外暴露，仅内部调用）。
 
-- Excel 上传接口，基于 EasyExcel `PageReadListener` 流式读取超大表格
-- 数据清洗（ETL），批量写入数据源
-- 每读满一批数据（如 2000 条），打包投递到 RabbitMQ 数据队列
-- JVM 内存控制与批处理性能优化
+- **不绑定任何用户业务语义**，纯粹的 ETL 管道
+- 以 RabbitMQ 消费者的身份接收文件处理任务（含文件路径/OSS 地址）
+- 基于 EasyExcel `PageReadListener` 流式读取超大表格，控制 JVM 内存
+- 数据清洗（ETL）后，将结构化数据投递到 RabbitMQ **Data-Queue** 供 Intelligence 消费
+- 处理完成后回复确认消息，由上游更新文件状态
 
 ### ai-data-intelligence (AI 智能分析微服务)
 
 AI 计算密集型核心服务（端口 `8030`）。
 
 - RabbitMQ 消费者，按 QoS（prefetch=1）匀速消费数据
-- 集成 LangChain4j / Spring AI，组合 Prompt 调用大模型 API
-- 利用大模型 Structured Outputs 强制返回结构化的业务指标与分析洞察
-- 调用 EasyExcel 动态生成"AI 批注版 Excel 报表"并存储到对象存储（OSS/MinIO）
-- Sentinel 熔断降级：大模型网络抖动时实施线程隔离和本地算法 Fallback
+  - 集成 LangChain4j / Spring AI，组合 Prompt 调用大模型 API
+  - 利用大模型 Structured Outputs 强制返回结构化的业务指标与分析洞察
+  - 调用 EasyExcel 动态生成"AI 批注版 Excel 报表"并存储到对象存储（OSS/MinIO）
+  - Sentinel 熔断降级：大模型网络抖动时实施线程隔离和本地算法 Fallback
 
 ### ai-data-monitor (监控与 Token 审计微服务)
 
 可观测性中台服务（端口 `8040`）。
 
 - 监听 RabbitMQ Token-Billing-Queue，异步记录每次 AI 调用的流量成本
-- 提供前端看板所需的多维度 Token 消耗趋势数据（天/小时/模型/用户）
-- 集成 Spring Boot Actuator 监控集群健康状态
-- MQ 异步解耦 + 定时任务聚合分析
+  - 提供前端看板所需的多维度 Token 消耗趋势数据（天/小时/模型/用户）
+  - 集成 Spring Boot Actuator 监控集群健康状态
+  - MQ 异步解耦 + 定时任务聚合分析
 
 ## 快速启动
 

@@ -1,6 +1,6 @@
 package com.yuan.serviceclient.feign;
 
-import com.yuan.common.api.Result;
+import com.yuan.common.BaseResponse;
 import com.yuan.model.dto.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,5 +10,5 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface UserFeignClient {
 
     @GetMapping("/{id}")
-    Result<UserDTO> getUserById(@PathVariable("id") Long id);
+    BaseResponse<UserDTO> getUserById(@PathVariable("id") Long id);
 }
