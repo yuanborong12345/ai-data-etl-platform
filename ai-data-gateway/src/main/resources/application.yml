@@ -1,0 +1,28 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: ai-data-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+    gateway:
+      routes:
+        - id: ai-data-user
+          uri: lb://ai-data-user
+          predicates:
+            - Path=/api/user/**
+        - id: ai-data-processor
+          uri: lb://ai-data-processor
+          predicates:
+            - Path=/api/processor/**
+        - id: ai-data-intelligence
+          uri: lb://ai-data-intelligence
+          predicates:
+            - Path=/api/intelligence/**
+        - id: ai-data-monitor
+          uri: lb://ai-data-monitor
+          predicates:
+            - Path=/api/monitor/**
