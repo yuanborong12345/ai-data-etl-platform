@@ -3,11 +3,21 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+
+**/application-dev.yml
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/claudeCodeTabState.xml
+.idea/sqldialects.xml
+.idea/uiDesigner.xml
+.idea/mybatisx/
+.idea/workspace.xml
 *.iws
 *.iml
 *.ipr

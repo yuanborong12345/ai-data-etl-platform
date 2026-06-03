@@ -12,11 +12,21 @@
     <artifactId>ai-data-model</artifactId>
 
     <dependencies>
+        <!-- MyBatis-Plus 注解 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-annotation</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.yuan</groupId>
+            <artifactId>ai-data-common</artifactId>
         </dependency>
     </dependencies>
 

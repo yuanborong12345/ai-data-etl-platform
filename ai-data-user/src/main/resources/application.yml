@@ -1,14 +1,47 @@
 server:
   port: 8010
 spring:
+  profiles:
+    active: dev
   application:
     name: ai-data-user
   cloud:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
+  # Mysql 数据库配置
   datasource:
-    url: jdbc:mysql://localhost:3306/ai_data_user?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/ai_data_etl_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
-    password: root
+    password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+  # redis 配置
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+jwt:
+  secret: ai-data-etl-platform-jwt-secret-key-2025-spring-cloud
+# mybatis-plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      table-underline: false
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  type-aliases-package: com.yuan.model.entity
+  mapper-locations: classpath:mapper/*.xml
+# 开启聚合文档
+knife4j:
+  enable: true

@@ -8,6 +8,9 @@ public enum ErrorCode {
 
     SUCCESS(0, "ok"),
     PARAMS_ERROR(40000, "请求参数错误"),
+    LOGIN_ACCOUNT_NOT_EXIST(40001,"登录账号不存在"),
+    LOGIN_ACCOUNT_PASSWORD_ERROR(40002,"登录密码错误"),
+    LOGIN_ACCOUNT_STATUS_EXCEPTION(40003,"账号状态异常"),
     NOT_LOGIN_ERROR(40100, "未登录"),
     NO_AUTH_ERROR(40101, "无权限"),
     NOT_FOUND_ERROR(40400, "请求数据不存在"),
