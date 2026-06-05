@@ -132,8 +132,7 @@ AI 计算密集型核心服务（端口 `8030`）。
 ### 数据库初始化
 
 ```sql
--- ai-data-user 模块
-CREATE DATABASE IF NOT EXISTS ai_data_user DEFAULT CHARACTER SET utf8mb4;
+sql目录下的creat_table.sql文件进行表的创建初始化
 ```
 
 ### 构建与运行
@@ -159,3 +158,6 @@ mvn spring-boot:run -pl ai-data-monitor
 | ai-data-processor | 8020 |
 | ai-data-intelligence | 8030 |
 | ai-data-monitor | 8040 |
+
+## 项目聚合了swagger文档方便测试
+本地启动后访问 http://localhost:8000/doc.html#home 即可打开

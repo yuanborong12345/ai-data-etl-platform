@@ -32,7 +32,7 @@ jwt:
 # mybatis-plus 配置
 mybatis-plus:
   configuration:
-    map-underscore-to-camel-case: true
+    map-underscore-to-camel-case: false
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
@@ -42,6 +42,6 @@ mybatis-plus:
       logic-not-delete-value: 0
   type-aliases-package: com.yuan.model.entity
   mapper-locations: classpath:mapper/*.xml
-# 开启聚合文档
+# 聚合文档
 knife4j:
   enable: true

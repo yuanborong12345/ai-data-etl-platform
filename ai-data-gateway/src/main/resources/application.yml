@@ -29,6 +29,8 @@ spring:
             - Path=/api/monitor/**
           filters:
             - StripPrefix=1
+jwt:
+  secret: ai-data-etl-platform-jwt-secret-key-2025-spring-cloud
 knife4j:
   gateway:
     # ① 第一个配置，开启gateway聚合组件

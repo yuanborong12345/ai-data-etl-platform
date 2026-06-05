@@ -1,13 +1,16 @@
 package com.yuan.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * 全局跨域配置
+ * 全局跨域配置（仅 Servlet 应用生效，Gateway 走自己的 CORS）
  */
 @Configuration
+@ConditionalOnWebApplication(type = Type.SERVLET)
 public class CorsConfig implements WebMvcConfigurer {
 
     @Override

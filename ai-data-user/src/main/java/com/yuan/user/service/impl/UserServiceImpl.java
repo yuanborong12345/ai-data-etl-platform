@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yuan.common.ErrorCode;
+import com.yuan.constant.RedisKeyPrefix;
 import com.yuan.exception.BusinessException;
 import com.yuan.model.dto.user.UserLoginRequest;
 import com.yuan.model.dto.user.UserQueryRequest;
@@ -33,8 +34,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private JwtUtils jwtUtils;
-
-    private static final String SESSION_KEY_PREFIX = "aidata:session:user:";
 
     private static final String SALT = "ai_data_user_yuan_salt";
 
@@ -86,7 +85,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.LOGIN_ACCOUNT_STATUS_EXCEPTION);
         }
         //4. 生成Token
-        String token = jwtUtils.generateToken(user.getId(), user.getUserAccount());
+        String token = jwtUtils.generateToken(user.getId(), user.getUserAccount(),user.getUserRole());
         //5.组装结构Session
         UserSessionDTO session = new UserSessionDTO();
         session.setId(user.getId());
@@ -96,7 +95,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         session.setStatus(user.getStatus());
         session.setToken(token);
         session.setLoginTime(System.currentTimeMillis());
-        String key = SESSION_KEY_PREFIX + user.getId();
+        String key = RedisKeyPrefix.SESSION_PREFIX + user.getId();
         stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(session), 30, TimeUnit.MINUTES);
         LoginUserVO vo = new LoginUserVO();
         BeanUtils.copyProperties(user, vo);
