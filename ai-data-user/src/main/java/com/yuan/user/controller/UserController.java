@@ -1,8 +1,10 @@
 package com.yuan.user.controller;
 
+import com.yuan.annotation.AuthCheck;
 import com.yuan.common.BaseResponse;
 import com.yuan.common.ErrorCode;
 import com.yuan.common.ResultUtils;
+import com.yuan.constant.UserConstant;
 import com.yuan.exception.BusinessException;
 import com.yuan.model.dto.user.UserLoginRequest;
 import com.yuan.model.dto.user.UserQueryRequest;
@@ -61,6 +63,7 @@ public class UserController {
     }
 
     @PostMapping("/list")
+    @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     public BaseResponse<List<UserVO>> list(@RequestBody UserQueryRequest request) {
         List<UserVO> list = userService.listUserByPage(request);
         return ResultUtils.success(list);

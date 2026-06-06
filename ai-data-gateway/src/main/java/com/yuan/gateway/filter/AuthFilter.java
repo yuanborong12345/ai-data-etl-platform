@@ -85,19 +85,19 @@ public class AuthFilter implements GlobalFilter, Ordered {
                     .flatMap(sessionJson -> {
                         // Redis 中无此 Session，说明已经过期或者下线
                         if (StrUtil.isBlank(sessionJson)) {
-                            return onError(exchange, HttpStatus.UNAUTHORIZED, ErrorCode.NOT_LOGIN_ERROR);
+                            return onError(exchange, HttpStatus.UNAUTHORIZED, ErrorCode.GATEWAY_SESSION_EXPIRED);
                         }
                         //转换Session 结构
                         GatewaySessionDTO session = JSONUtil.toBean(sessionJson, GatewaySessionDTO.class);
 
                         // 顶号校验：传上来的 Token 与 Redis 最新的不一致
                         if (!token.equals(session.getToken())) {
-                            return onError(exchange, HttpStatus.UNAUTHORIZED, ErrorCode.NOT_LOGIN_ERROR);
+                            return onError(exchange, HttpStatus.UNAUTHORIZED, ErrorCode.GATEWAY_KICKED_BY_ANOTHER_LOGIN);
                         }
 
                         // 状态校验：被管理员秒级封号
                         if (session.getStatus() == 1) {
-                            return onError(exchange, HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN_ERROR);
+                            return onError(exchange, HttpStatus.FORBIDDEN, ErrorCode.GATEWAY_ACCOUNT_BANNED);
                         }
 
                         // Token 自动续期逻辑（滑动窗口）
