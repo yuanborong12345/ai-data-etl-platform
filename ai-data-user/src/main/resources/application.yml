@@ -9,13 +9,11 @@ spring:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
-  # Mysql 数据库配置
   datasource:
     url: jdbc:mysql://localhost:3306/ai_data_etl_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
-  # redis 配置
   data:
     redis:
       host: 127.0.0.1
@@ -27,9 +25,19 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+# ============新增springdoc OpenAPI3配置 ============
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  group-configs:
+    - group: ai-data-user
+      paths-to-match: /**
+      packages-to-scan: com.yuan.user.controller
+# ======================================================
 jwt:
   secret: ai-data-etl-platform-jwt-secret-key-2025-spring-cloud
-# mybatis-plus 配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
@@ -42,6 +50,5 @@ mybatis-plus:
       logic-not-delete-value: 0
   type-aliases-package: com.yuan.model.entity
   mapper-locations: classpath:mapper/*.xml
-# 聚合文档
 knife4j:
   enable: true

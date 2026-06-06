@@ -1,27 +1,26 @@
-package com.yuan.config;
+package com.yuan.user.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
-import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ *  MyBatis 配置
+ */
 @Configuration
-public class MyBatisPlusConfig {
-
+@MapperScan("com.yuan.user.mapper") // 每个服务扫描路径不同！必须单独写
+public class UserMyBatisConfig {
+    /**
+     * 拦截器配置
+     */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        // 分页插件
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         return interceptor;
-    }
-
-    /**
-     * 关闭驼峰转下划线，因为数据库字段本身就是驼峰命名
-     */
-    @Bean
-    public MybatisPlusPropertiesCustomizer mybatisPlusPropertiesCustomizer() {
-        return properties -> properties.getGlobalConfig().getDbConfig().setTableUnderline(false);
     }
 }

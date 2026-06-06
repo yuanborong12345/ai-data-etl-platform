@@ -1,5 +1,6 @@
 package com.yuan.gateway.filter;
 
+import cn.hutool.core.text.AntPathMatcher;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.yuan.common.ErrorCode;
@@ -23,6 +24,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 权限拦截器
@@ -37,27 +40,27 @@ public class AuthFilter implements GlobalFilter, Ordered {
     @Resource
     private JwtUtils jwtUtils;
 
-    private static final String[] EXCLUDE_URLS = {
+    private static final List<String> WHITE_LIST = Arrays.asList(
             "/api/user/login",
             "/api/user/register",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
             "/doc.html",
             "/webjars/**",
-            "/swagger-resources/**",
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/**/v3/api-docs/**",
-            "/**/api-docs"
-    };
+            "/swagger-resources/**"
+    );
+
+    private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
         //1. 白名单校验
-        for (String url : EXCLUDE_URLS) {
-            // 使用 cn.hutool.core.text.AntPathMatcher（或者 Spring 自带的 PathPattern）
-            // 如果 path 匹配白名单规则（如 /webjars/js/xxx 匹配 /webjars/**），则直接放行
-            if (new org.springframework.util.AntPathMatcher().match(url, path)) {
+        for (String url : WHITE_LIST) {
+            // 使用全局的 matcher 进行匹配
+            if (ANT_PATH_MATCHER.match(url, path)) {
                 log.debug("白名单放行路径: {}", path);
                 return chain.filter(exchange);
             }
