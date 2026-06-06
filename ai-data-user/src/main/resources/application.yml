@@ -1,5 +1,7 @@
 server:
   port: 8010
+  servlet:
+    context-path: /api/user
 spring:
   profiles:
     active: dev
@@ -12,29 +14,19 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/ai_data_etl_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
-    password: 123456
+    password: abc123
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
       host: 127.0.0.1
       port: 6379
-      password: 123456
+      password:
       timeout: 3000ms
       lettuce:
         pool:
           max-active: 8
           max-idle: 8
           min-idle: 0
-# ============新增springdoc OpenAPI3配置 ============
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-  group-configs:
-    - group: ai-data-user
-      paths-to-match: /**
-      packages-to-scan: com.yuan.user.controller
 # ======================================================
 jwt:
   secret: ai-data-etl-platform-jwt-secret-key-2025-spring-cloud

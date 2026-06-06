@@ -14,21 +14,12 @@ spring:
     gateway:
       routes:
         # ==========================================
-        #  user 服务openapi 文档
-        # ==========================================
-        - id: ai-data-user-openapi
-          uri: lb://ai-data-user
-          predicates:
-            - Path=/v3/api-docs/ai-data-user/**
-        # ==========================================
         # user 服务业务路由
         # ==========================================
         - id: ai-data-user
           uri: lb://ai-data-user
           predicates:
             - Path=/api/user/**
-          filters:
-            - StripPrefix=1
         # ==========================================
         # intelligence 服务业务路由
         # ==========================================
@@ -36,8 +27,6 @@ spring:
           uri: lb://ai-data-intelligence
           predicates:
             - Path=/api/intelligence/**
-          filters:
-            - StripPrefix=1
         # ==========================================
         # monitor 服务业务路由
         # ==========================================
@@ -45,18 +34,26 @@ spring:
           uri: lb://ai-data-monitor
           predicates:
             - Path=/api/monitor/**
-          filters:
-            - StripPrefix=1
 # swagger 文档配置
 knife4j:
   gateway:
     enabled: true
     strategy: manual
     routes:
-        - name: 用户服务
-          url: /v3/api-docs/ai-data-user
-          service-name: ai-data-user
-          order: 1
+      - name: 用户服务
+        service-name: ai-data-user
+        # 【核心魔法】：直接请求网关的业务路径，网关透传给后端，后端带着 context-path 完美接客！
+        url: /api/user/v3/api-docs
+        context-path: /api/user
+        order: 1
+      - name: 智能服务
+        service-name: ai-data-intelligence
+        url: /api/intelligence/v3/api-docs
+        order: 2
+      - name: 监控服务
+        service-name: ai-data-monitor
+        url: /api/monitor/v3/api-docs
+        order: 3
 # jwt 配置
 jwt:
   secret: ai-data-etl-platform-jwt-secret-key-2025-spring-cloud

@@ -43,7 +43,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
     private static final List<String> WHITE_LIST = Arrays.asList(
             "/api/user/login",
             "/api/user/register",
-            "/v3/api-docs/**",
+            "/**/v3/api-docs/**",
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/doc.html",
@@ -58,7 +58,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
         //1. 白名单校验
-        for (String url : WHITE_LIST) {
+            for (String url : WHITE_LIST) {
             // 使用全局的 matcher 进行匹配
             if (ANT_PATH_MATCHER.match(url, path)) {
                 log.debug("白名单放行路径: {}", path);
