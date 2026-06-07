@@ -22,10 +22,20 @@
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
+        <!-- RabbitMQ 消息收发 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
         <!-- Common Module -->
         <dependency>
             <groupId>com.yuan</groupId>
             <artifactId>ai-data-common</artifactId>
+        </dependency>
+        <!-- Model (实体/DTO) -->
+        <dependency>
+            <groupId>com.yuan</groupId>
+            <artifactId>ai-data-model</artifactId>
         </dependency>
         <!-- Test -->
         <dependency>
