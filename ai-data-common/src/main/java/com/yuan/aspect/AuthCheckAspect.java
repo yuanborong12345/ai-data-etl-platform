@@ -8,10 +8,14 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 import com.yuan.utils.UserContext;
+import org.springframework.web.servlet.DispatcherServlet;
+
 @Component
 @Aspect
+@ConditionalOnClass(DispatcherServlet.class)
 public class AuthCheckAspect {
     @Pointcut("@annotation(com.yuan.annotation.AuthCheck)")
     public void authPointcut() {}

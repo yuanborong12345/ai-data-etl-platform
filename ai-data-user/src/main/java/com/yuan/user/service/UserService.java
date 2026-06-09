@@ -19,4 +19,6 @@ public interface UserService extends IService<User> {
     UserVO getCurrentUser(Long userId);
 
     List<UserVO> listUserByPage(UserQueryRequest queryRequest);
+
+    Boolean isAdmin(Long userId);
 }

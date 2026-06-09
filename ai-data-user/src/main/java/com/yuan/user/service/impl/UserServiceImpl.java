@@ -17,6 +17,7 @@ import com.yuan.model.vo.UserVO;
 import com.yuan.user.mapper.UserMapper;
 import com.yuan.user.service.UserService;
 import com.yuan.utils.JwtUtils;
+import com.yuan.utils.UserContext;
 import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -37,6 +38,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     private static final String SALT = "ai_data_user_yuan_salt";
 
+    /**
+     * 用户注册
+     */
     @Override
     public Long userRegister(String userAccount, String userPassword, String checkPassword) {
         if (!userPassword.equals(checkPassword)) {
@@ -58,7 +62,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     /**
      * 用户登录
-     * @return 脱敏后的用户信息
      */
     @Override
     public LoginUserVO userLogin(UserLoginRequest userLoginRequest) {
@@ -147,5 +150,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             BeanUtils.copyProperties(user, vo);
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 判断是否为管理员
+     */
+    @Override
+    public Boolean isAdmin(Long userId) {
+        String role = UserContext.getRole();
+        if(role.equals("admin")){
+            return true;
+        }
+        return false;
     }
 }
