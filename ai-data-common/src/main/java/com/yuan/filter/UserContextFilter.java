@@ -13,7 +13,8 @@ public class UserContextFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         String role = req.getHeader("X-USER-ROLE");
-        UserContext.setRole(role);
+        String userId = req.getHeader("X-User-Id");
+        UserContext.set(role, userId);
         try {
             chain.doFilter(request, response);
         } finally {
