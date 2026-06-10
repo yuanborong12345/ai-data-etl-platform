@@ -6,9 +6,11 @@ import com.yuan.common.ErrorCode;
 import com.yuan.common.ResultUtils;
 import com.yuan.constant.UserConstant;
 import com.yuan.exception.BusinessException;
+import com.yuan.model.dto.user.UserAdminEditRequest;
 import com.yuan.model.dto.user.UserLoginRequest;
 import com.yuan.model.dto.user.UserQueryRequest;
 import com.yuan.model.dto.user.UserRegisterRequest;
+import com.yuan.model.dto.user.UserUpdateRequest;
 import com.yuan.model.vo.LoginUserVO;
 import com.yuan.model.vo.UserVO;
 import com.yuan.user.service.UserService;
@@ -47,6 +49,41 @@ public class UserController {
 
     @GetMapping("/current")
     public BaseResponse<UserVO> current(@RequestHeader("Authorization") String authHeader) {
+        Long userId = getUserIdFromToken(authHeader);
+        UserVO vo = userService.getCurrentUser(userId);
+        return ResultUtils.success(vo);
+    }
+
+    @PostMapping("/logout")
+    public BaseResponse<Void> logout(@RequestHeader("Authorization") String authHeader) {
+        Long userId = getUserIdFromToken(authHeader);
+        userService.logout(userId);
+        return ResultUtils.success(null);
+    }
+
+    @PostMapping("/update")
+    public BaseResponse<Void> update(@RequestHeader("Authorization") String authHeader,
+                                     @Valid @RequestBody UserUpdateRequest request) {
+        Long userId = getUserIdFromToken(authHeader);
+        userService.updateUser(request, userId);
+        return ResultUtils.success(null);
+    }
+
+    @PostMapping("/admin/edit")
+    @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
+    public BaseResponse<Void> adminEdit(@Valid @RequestBody UserAdminEditRequest request) {
+        userService.adminEditUser(request);
+        return ResultUtils.success(null);
+    }
+
+    @PostMapping("/list")
+    @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
+    public BaseResponse<List<UserVO>> list(@RequestBody UserQueryRequest request) {
+        List<UserVO> list = userService.listUserByPage(request);
+        return ResultUtils.success(list);
+    }
+
+    private Long getUserIdFromToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
@@ -57,15 +94,6 @@ public class UserController {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "登录已过期，请重新登录");
         }
-        Long userId = Long.valueOf(claims.getSubject());
-        UserVO vo = userService.getCurrentUser(userId);
-        return ResultUtils.success(vo);
-    }
-
-    @PostMapping("/list")
-    @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
-    public BaseResponse<List<UserVO>> list(@RequestBody UserQueryRequest request) {
-        List<UserVO> list = userService.listUserByPage(request);
-        return ResultUtils.success(list);
+        return Long.valueOf(claims.getSubject());
     }
 }

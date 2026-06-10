@@ -8,9 +8,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yuan.common.ErrorCode;
 import com.yuan.constant.RedisKeyPrefix;
 import com.yuan.exception.BusinessException;
+import com.yuan.model.dto.user.UserAdminEditRequest;
 import com.yuan.model.dto.user.UserLoginRequest;
 import com.yuan.model.dto.user.UserQueryRequest;
 import com.yuan.model.dto.user.UserSessionDTO;
+import com.yuan.model.dto.user.UserUpdateRequest;
 import com.yuan.model.entity.User;
 import com.yuan.model.vo.LoginUserVO;
 import com.yuan.model.vo.UserVO;
@@ -162,5 +164,53 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void logout(Long userId) {
+        String key = RedisKeyPrefix.SESSION_PREFIX + userId;
+        stringRedisTemplate.delete(key);
+    }
+
+    @Override
+    public void updateUser(UserUpdateRequest request, Long userId) {
+        User user = baseMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "用户不存在");
+        }
+        if (request.getUserName() != null) {
+            user.setUserName(request.getUserName());
+        }
+        if (request.getUserAvatar() != null) {
+            user.setUserAvatar(request.getUserAvatar());
+        }
+        if (request.getUserProfile() != null) {
+            user.setUserProfile(request.getUserProfile());
+        }
+        baseMapper.updateById(user);
+    }
+
+    @Override
+    public void adminEditUser(UserAdminEditRequest request) {
+        User user = baseMapper.selectById(request.getUserId());
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "用户不存在");
+        }
+        if (request.getUserName() != null) {
+            user.setUserName(request.getUserName());
+        }
+        if (request.getUserAvatar() != null) {
+            user.setUserAvatar(request.getUserAvatar());
+        }
+        if (request.getUserProfile() != null) {
+            user.setUserProfile(request.getUserProfile());
+        }
+        if (request.getUserRole() != null) {
+            user.setUserRole(request.getUserRole());
+        }
+        if (request.getStatus() != null) {
+            user.setStatus(request.getStatus());
+        }
+        baseMapper.updateById(user);
     }
 }
