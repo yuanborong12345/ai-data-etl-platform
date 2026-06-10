@@ -41,25 +41,51 @@ CREATE TABLE IF NOT EXISTS template_info
     INDEX idx_auditStatus (auditStatus)
 ) COMMENT '业务模板表' COLLATE = utf8mb4_unicode_ci;
 
--- 文件元数据表：记录每个上传文件的信息与处理状态
+-- 文件元数据表：记录每个上传文件的基础信息
 create table if not exists file_info
 (
     id           bigint auto_increment comment '主键ID' primary key,
     fileName     varchar(256)                           not null comment '原始文件名',
     fileSize     bigint                                 null comment '文件大小（字节）',
     fileType     varchar(32)                            null comment '文件类型（扩展名）',
+    contentType  varchar(128)                           null comment 'MIME类型',
     storagePath  varchar(512)                           null comment '存储路径',
+    storageType  varchar(32)  default 'local'            not null comment '存储类型：local/oss/minio',
+    fileMd5      varchar(64)                            null comment '文件MD5',
     userId       bigint                                 not null comment '上传用户ID',
-    templateId   bigint                                 not null comment '关联的模板ID',
-    taskId       varchar(64)                            not null comment '任务ID（UUID）',
-    status       tinyint      default 0                 not null comment '文件状态：0上传中 1待解析 2解析中 3AI分析中 4完成 5失败',
-    promptContent text                                   null comment '用户输入的分析需求描述（如：分析各区域季度销售趋势）',
-    errorMsg     varchar(1024)                          null comment '失败原因',
     editTime     datetime     default CURRENT_TIMESTAMP not null comment '编辑时间',
     createTime   datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime   datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     isDelete     tinyint      default 0                 not null comment '是否删除',
     INDEX idx_userId (userId),
-    INDEX idx_taskId (taskId),
-    INDEX idx_status (status)
+    INDEX idx_fileMd5 (fileMd5)
 ) comment '文件元数据表' collate = utf8mb4_unicode_ci;
+
+-- 任务信息表：记录每个文件处理任务的状态与结果
+create table if not exists task_info
+(
+    id                bigint auto_increment comment '主键ID' primary key,
+    taskId            varchar(64)                            not null comment '任务ID（UUID）',
+    fileId            bigint                                 not null comment '关联的文件ID',
+    templateId        bigint                                 not null comment '关联的模板ID',
+    userId            bigint                                 not null comment '任务所属用户ID',
+    promptContent     text                                   null comment '用户输入的分析需求描述（如：分析各区域季度销售趋势）',
+    status            tinyint      default 0                 not null comment '任务状态：0上传中 1待解析 2解析中 3AI分析中 4完成 5失败',
+    errorMsg          varchar(1024)                          null comment '失败原因',
+    resultPath        varchar(512)                           null comment '结构化处理结果路径',
+    reportPath        varchar(512)                           null comment 'AI报告文件路径',
+    parseStartTime    datetime                               null comment '解析开始时间',
+    parseEndTime      datetime                               null comment '解析结束时间',
+    analysisStartTime datetime                               null comment 'AI分析开始时间',
+    analysisEndTime   datetime                               null comment 'AI分析结束时间',
+    editTime          datetime     default CURRENT_TIMESTAMP not null comment '编辑时间',
+    createTime        datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
+    updateTime        datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    isDelete          tinyint      default 0                 not null comment '是否删除',
+    UNIQUE KEY uk_taskId (taskId),
+    INDEX idx_fileId (fileId),
+    INDEX idx_templateId (templateId),
+    INDEX idx_userId (userId),
+    INDEX idx_status (status),
+    INDEX idx_user_status_createTime (userId, status, createTime)
+) comment '任务信息表' collate = utf8mb4_unicode_ci;
