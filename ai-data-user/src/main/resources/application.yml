@@ -27,6 +27,13 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    publisher-confirm-type: correlated # 开启发送确认
+    publisher-returns: true            # 开启发送失败返回
 # ======================================================
 jwt:
   secret: ai-data-etl-platform-jwt-secret-key-2025-spring-cloud

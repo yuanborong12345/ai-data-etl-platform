@@ -1,7 +1,6 @@
 package com.yuan.user.config;
 
 import com.yuan.constant.MqConstant;
-import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -25,10 +24,15 @@ public class RabbitConfig {
     }
 
     @Bean
-    public AmqpTemplate amqpTemplate(ConnectionFactory connectionFactory,
-                                     Jackson2JsonMessageConverter jackson2JsonMessageConverter) {
+    public RabbitTemplate amqpTemplate(ConnectionFactory connectionFactory,
+                                       Jackson2JsonMessageConverter jackson2JsonMessageConverter,
+                                       RabbitTemplate.ConfirmCallback confirmCallback,
+                                       RabbitTemplate.ReturnsCallback returnsCallback) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(jackson2JsonMessageConverter);
+        rabbitTemplate.setConfirmCallback(confirmCallback);
+        rabbitTemplate.setMandatory(true);
+        rabbitTemplate.setReturnsCallback(returnsCallback);
         return rabbitTemplate;
     }
 }
