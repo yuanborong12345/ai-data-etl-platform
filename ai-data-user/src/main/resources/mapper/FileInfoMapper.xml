@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuan.user.mapper.FileInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.yuan.model.entity.FileInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="fileName" column="fileName" jdbcType="VARCHAR"/>
+            <result property="fileSize" column="fileSize" jdbcType="BIGINT"/>
+            <result property="fileType" column="fileType" jdbcType="VARCHAR"/>
+            <result property="contentType" column="contentType" jdbcType="VARCHAR"/>
+            <result property="storagePath" column="storagePath" jdbcType="VARCHAR"/>
+            <result property="storageType" column="storageType" jdbcType="VARCHAR"/>
+            <result property="fileMd5" column="fileMd5" jdbcType="VARCHAR"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,fileName,fileSize,
+        fileType,contentType,storagePath,
+        storageType,fileMd5,userId,
+        editTime,createTime,updateTime,
+        isDelete
+    </sql>
+</mapper>
