@@ -56,4 +56,4 @@ knife4j:
         order: 3
 # jwt 配置
 jwt:
-  secret: ai-data-etl-platform-jwt-secret-key-2026-excel-ai
+  secret: ${JWT_SECRET_KEY}
