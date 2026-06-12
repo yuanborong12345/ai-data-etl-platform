@@ -1,5 +1,6 @@
 package com.yuan.model.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import com.yuan.model.enums.FileStorageType;
@@ -12,6 +13,7 @@ import java.util.Date;
  * 文件元数据表
  * @TableName file_info
  */
+@TableName(value ="file_info")
 @Data
 public class FileInfo implements Serializable {
     @Serial

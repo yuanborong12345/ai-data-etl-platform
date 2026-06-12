@@ -10,7 +10,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
+        server-addr: ${NACOS_HOST}:${NACOS_PORT}
   datasource:
     url: jdbc:mysql://localhost:3306/ai_data_etl_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
@@ -18,9 +18,9 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
-      password:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
       timeout: 3000ms
       lettuce:
         pool:
@@ -28,10 +28,10 @@ spring:
           max-idle: 8
           min-idle: 0
   rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBIT_MQ_HOST}
+    port: ${RABBIT_MQ_PORT}
+    username: ${RABBIT_MQ_USER_NAME}
+    password: ${RABBIT_MQ_PASSWORD}
     publisher-confirm-type: correlated # 开启发送确认
     publisher-returns: true            # 开启发送失败返回
 # ======================================================
@@ -57,7 +57,7 @@ file:
     # 激活策略
     active-type: minio
     # 允许上传的文件扩展名白名单（空列表表示不限制）
-    allowed-file-types: txt, json, xml, zip, rar
+    allowed-file-types: txt, json, xml, zip, rar,xlsx
     # 暂存模式：开启后文件先写入暂存路径，确认使用后通过 promote() 转移至久存路径
     stage-mode: false
     stage-prefix: staging
@@ -86,7 +86,7 @@ file:
       enabled: true
       path-prefix: uploads
       public-url:
-      endpoint: https://${MINIO_HOST}:${MINIO_PORT}
+      endpoint: http://${MINIO_HOST}:${MINIO_PORT}
       bucket-name: etl-platform-data
       access-key: ${MINIO_ACCESS_KEY}
       secret-key: ${MINIO_SECRET_KEY}

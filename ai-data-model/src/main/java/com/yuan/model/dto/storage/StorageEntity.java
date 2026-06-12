@@ -1,4 +1,4 @@
-package com.yuan.user.service.storage.model;
+package com.yuan.model.dto.storage;
 
 import com.yuan.model.enums.FileStorageType;
 import lombok.Data;

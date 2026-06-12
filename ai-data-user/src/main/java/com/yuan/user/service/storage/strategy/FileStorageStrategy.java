@@ -1,12 +1,12 @@
 package com.yuan.user.service.storage.strategy;
 
 import com.yuan.model.enums.FileStorageType;
-import com.yuan.user.service.storage.model.FileStorageObject;
-import com.yuan.user.service.storage.model.FileStorageResult;
-import com.yuan.user.service.storage.model.FileStorageStat;
-import com.yuan.user.service.storage.model.PresignedDownloadResult;
-import com.yuan.user.service.storage.model.PresignedUploadRequest;
-import com.yuan.user.service.storage.model.PresignedUploadResult;
+import com.yuan.model.dto.storage.FileStorageObject;
+import com.yuan.model.dto.storage.FileStorageResult;
+import com.yuan.model.dto.storage.FileStorageStat;
+import com.yuan.model.dto.storage.PresignedDownloadResult;
+import com.yuan.model.dto.storage.PresignedUploadRequest;
+import com.yuan.model.dto.storage.PresignedUploadResult;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;

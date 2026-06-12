@@ -3,10 +3,10 @@ package com.yuan.user.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yuan.model.entity.FileInfo;
-import com.yuan.user.service.storage.model.FileStorageObject;
-import com.yuan.user.service.storage.model.PresignedDownloadResult;
-import com.yuan.user.service.storage.model.PresignedUploadRequest;
-import com.yuan.user.service.storage.model.PresignedUploadResult;
+import com.yuan.model.dto.storage.FileStorageObject;
+import com.yuan.model.dto.storage.PresignedDownloadResult;
+import com.yuan.model.dto.storage.PresignedUploadRequest;
+import com.yuan.model.dto.storage.PresignedUploadResult;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
