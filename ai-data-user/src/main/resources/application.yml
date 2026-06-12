@@ -51,3 +51,42 @@ mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
 knife4j:
   enable: true
+
+file:
+  storage:
+    # 激活策略
+    active-type: minio
+    # 允许上传的文件扩展名白名单（空列表表示不限制）
+    allowed-file-types: txt, json, xml, zip, rar
+    # 暂存模式：开启后文件先写入暂存路径，确认使用后通过 promote() 转移至久存路径
+    stage-mode: false
+    stage-prefix: staging
+    # 容错配置（重试 + 熔断）
+    resilience:
+      # 启用/禁用重试机制
+      retry-enabled: true
+      # 重试次数
+      max-attempts: 3
+      # 重试间隔（毫秒）
+      backoff-millis: 200
+      #
+      circuit-enabled: true
+      failure-threshold: 5
+      open-duration-millis: 30000
+    # 可选存储服务策略
+    aliyun:
+      enabled: false
+      path-prefix: uploads
+      public-url:
+      endpoint:
+      bucket-name:
+      access-key-id:
+      access-key-secret:
+    minio:
+      enabled: true
+      path-prefix: uploads
+      public-url:
+      endpoint: https://${MINIO_HOST}:${MINIO_PORT}
+      bucket-name: etl-platform-data
+      access-key: ${MINIO_ACCESS_KEY}
+      secret-key: ${MINIO_SECRET_KEY}
