@@ -1,5 +1,7 @@
 package com.yuan.model.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -20,6 +22,7 @@ public class FileInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** 主键ID */
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /** 原始文件名 */

@@ -5,9 +5,11 @@ import com.yuan.common.ErrorCode;
 import com.yuan.exception.BusinessException;
 import com.yuan.model.dto.processor.FileProcessMessage;
 import com.yuan.model.entity.FileInfo;
+import com.yuan.model.entity.TaskInfo;
 import com.yuan.user.mapper.FileInfoMapper;
 import com.yuan.user.service.FileService;
 import com.yuan.user.service.RabbitMqService;
+import com.yuan.user.service.TaskInfoService;
 import com.yuan.user.service.storage.FileStorageStrategyFactory;
 import com.yuan.model.dto.storage.FileStorageObject;
 import com.yuan.model.dto.storage.FileStorageResult;
@@ -16,6 +18,7 @@ import com.yuan.model.dto.storage.PresignedDownloadResult;
 import com.yuan.model.dto.storage.PresignedUploadRequest;
 import com.yuan.model.dto.storage.PresignedUploadResult;
 import com.yuan.user.service.storage.strategy.FileStorageStrategy;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -23,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.util.Date;
-import java.util.UUID;
 
 /**
  * 文件存储服务实现类。
@@ -45,6 +47,9 @@ public class FileServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
         this.strategyFactory = strategyFactory;
         this.rabbitMqService = rabbitMqService;
     }
+
+    @Resource
+    private TaskInfoService taskInfoService;
 
     /**
      * 服务端直接上传文件到对象存储。
@@ -85,7 +90,6 @@ public class FileServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
             cleanupUploadedFile(strategy, result, e);
             throw e;
         }
-
         return fileInfo;
     }
 
@@ -335,31 +339,26 @@ public class FileServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
     }
 
     /**
-     * 发送文件处理消息到 RabbitMQ。
-     *
-     * <p>构造 {@link FileProcessMessage} 并通过 {@link RabbitMqService}
-     * 发送到消息队列，触发后续 ETL 管道处理。</p>
-     *
+     * 发送文件处理消息到 RabbitMQ（本地消息表模式）。
      * @param fileInfo      文件元数据
      * @param promptContent 用户分析需求描述（可选）
      */
     private void sendFileProcessMessage(FileInfo fileInfo, String promptContent) {
-        // 1. 校验文件信息完整性
         validateMessageFileInfo(fileInfo);
-
-        // 2. 构建文件处理消息对象
-        FileProcessMessage message = new FileProcessMessage(
-                UUID.randomUUID().toString(),
-                fileInfo.getId(),
-                fileInfo.getStoragePath(),
-                fileInfo.getStorageType(),
-                fileInfo.getFileName(),
-                fileInfo.getUserId(),
-                promptContent
-        );
-
-        // 3. 发送消息到 RabbitMQ
         try {
+            //1. 通过 TaskInfoService proxy 在事务中创建待发送任务记录。
+            TaskInfo taskInfo = taskInfoService.createPendingTask(fileInfo, promptContent);
+            //2. 构建 FileProcessMessage 并发送到 MQ。
+            FileProcessMessage message = new FileProcessMessage(
+                    taskInfo.getTaskId(),
+                    fileInfo.getId(),
+                    fileInfo.getStoragePath(),
+                    fileInfo.getStorageType(),
+                    fileInfo.getFileName(),
+                    fileInfo.getUserId(),
+                    promptContent
+            );
+            //3. ConfirmCallback 异步更新 mqSendStatus；失败由定时任务重试
             rabbitMqService.sendFileProcessMessage(message);
         } catch (BusinessException e) {
             throw e;

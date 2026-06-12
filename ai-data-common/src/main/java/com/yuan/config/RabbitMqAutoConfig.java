@@ -6,6 +6,7 @@ import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMqAutoConfig {
 
     @Bean
+    @ConditionalOnMissingBean
     public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
@@ -27,6 +29,7 @@ public class RabbitMqAutoConfig {
      * 发送确认回调（默认实现），需定制的模块自行声明同名 Bean 覆盖。
      */
     @Bean
+    @ConditionalOnMissingBean
     public RabbitTemplate.ConfirmCallback confirmCallback() {
         return (CorrelationData correlationData, boolean ack, String cause) -> {
             String id = correlationData != null ? correlationData.getId() : "unknown";
@@ -42,6 +45,7 @@ public class RabbitMqAutoConfig {
      * 消息退回回调（路由失败）
      */
     @Bean
+    @ConditionalOnMissingBean
     public RabbitTemplate.ReturnsCallback returnsCallback(){
         return returnedMessage -> {
             log.error("消息路由失败，消息体:{}", returnedMessage.getMessage());

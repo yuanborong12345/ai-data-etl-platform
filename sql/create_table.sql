@@ -82,10 +82,14 @@ create table if not exists task_info
     createTime        datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime        datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     isDelete          tinyint      default 0                 not null comment '是否删除',
+    mqSendStatus      tinyint      default 0                 not null comment 'MQ发送状态：0-待发送 1-发送成功 2-发送失败',
+    mqRetryCount      int          default 0                 not null comment 'MQ消息重试次数',
+    mqLastRetryTime   datetime                               null comment 'MQ最后重试时间',
     UNIQUE KEY uk_taskId (taskId),
     INDEX idx_fileId (fileId),
     INDEX idx_templateId (templateId),
     INDEX idx_userId (userId),
     INDEX idx_status (status),
-    INDEX idx_user_status_createTime (userId, status, createTime)
+    INDEX idx_user_status_createTime (userId, status, createTime),
+    INDEX idx_mq_status_retry (mqSendStatus, createTime, mqRetryCount)
 ) comment '任务信息表' collate = utf8mb4_unicode_ci;

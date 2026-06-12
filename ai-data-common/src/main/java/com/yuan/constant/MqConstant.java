@@ -31,4 +31,7 @@ public interface MqConstant {
 
     /** Token 计费路由键 */
     String RK_TOKEN_BILLING = "ai-data.rk.token.billing";
+
+    // ======================== 通用 ========================
+    Integer DEFAULT_MAX_RETRY_COUNT = 3;
 }

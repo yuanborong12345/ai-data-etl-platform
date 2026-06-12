@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuan.user.mapper.TaskInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.yuan.model.entity.TaskInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="taskId" column="taskId" jdbcType="VARCHAR"/>
+            <result property="fileId" column="fileId" jdbcType="BIGINT"/>
+            <result property="templateId" column="templateId" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="promptContent" column="promptContent" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="errorMsg" column="errorMsg" jdbcType="VARCHAR"/>
+            <result property="resultPath" column="resultPath" jdbcType="VARCHAR"/>
+            <result property="reportPath" column="reportPath" jdbcType="VARCHAR"/>
+            <result property="parseStartTime" column="parseStartTime" jdbcType="TIMESTAMP"/>
+            <result property="parseEndTime" column="parseEndTime" jdbcType="TIMESTAMP"/>
+            <result property="analysisStartTime" column="analysisStartTime" jdbcType="TIMESTAMP"/>
+            <result property="analysisEndTime" column="analysisEndTime" jdbcType="TIMESTAMP"/>
+            <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+            <result property="mqSendStatus" column="mqSendStatus" jdbcType="TINYINT"/>
+            <result property="mqRetryCount" column="mqRetryCount" jdbcType="INTEGER"/>
+            <result property="mqLastRetryTime" column="mqLastRetryTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,taskId,fileId,
+        templateId,userId,promptContent,
+        status,errorMsg,resultPath,
+        reportPath,parseStartTime,parseEndTime,
+        analysisStartTime,analysisEndTime,editTime,
+        createTime,updateTime,isDelete,
+        mqSendStatus,mqRetryCount,mqLastRetryTime
+    </sql>
+</mapper>
