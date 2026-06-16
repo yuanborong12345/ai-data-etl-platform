@@ -11,6 +11,8 @@ spring:
     nacos:
       discovery:
         server-addr: ${NACOS_HOST}:${NACOS_PORT}
+        namespace: ${NACOS_NAMESPACE}
+        group: ${NACOS_GROUP}
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: ${MYSQL_USERNAME}
