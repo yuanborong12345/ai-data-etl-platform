@@ -25,6 +25,9 @@ public class FileProcessMessage implements Serializable {
     /** 文件 ID，关联 file_info 表 */
     private Long fileId;
 
+    /** 文件模板 ID，关联 template_info 表 */
+    private Long templateId;
+
     /** 文件存储路径 */
     private String storagePath;
 

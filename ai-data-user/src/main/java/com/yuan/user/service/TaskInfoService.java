@@ -19,9 +19,10 @@ public interface TaskInfoService extends IService<TaskInfo> {
      *
      * @param fileInfo      关联的文件元数据
      * @param promptContent 用户分析需求描述
+     * @param templateId    关联的模板id
      * @return 持久化后的 TaskInfo（含生成的 taskId）
      */
-    TaskInfo createPendingTask(FileInfo fileInfo, String promptContent);
+    TaskInfo createPendingTask(FileInfo fileInfo, String promptContent, Long templateId);
 
     /**
      * 更新任务的 MQ 发送状态。

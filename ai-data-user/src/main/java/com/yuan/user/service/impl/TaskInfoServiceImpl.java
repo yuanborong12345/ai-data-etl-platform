@@ -28,14 +28,13 @@ public class TaskInfoServiceImpl extends ServiceImpl<TaskInfoMapper, TaskInfo>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TaskInfo createPendingTask(FileInfo fileInfo, String promptContent) {
+    public TaskInfo createPendingTask(FileInfo fileInfo, String promptContent, Long templateId) {
         String taskId = UUID.randomUUID().toString();
         TaskInfo taskInfo = new TaskInfo();
         taskInfo.setTaskId(taskId);
         taskInfo.setFileId(fileInfo.getId());
         taskInfo.setUserId(fileInfo.getUserId());
-        //todo 这里需要模板id传递，用于区分文件是绑定到哪个模板的
-        taskInfo.setTemplateId(1L);
+        taskInfo.setTemplateId(templateId);
         taskInfo.setPromptContent(promptContent);
         taskInfo.setStatus(1);
         taskInfo.setMqSendStatus(0);

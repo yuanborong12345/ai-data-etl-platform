@@ -111,9 +111,10 @@ public interface FileService extends IService<FileInfo> {
      * @param file          上传文件
      * @param userId        上传用户 ID
      * @param promptContent 用户分析需求描述（可选，如"分析各区域季度销售趋势"）
+     * @param templateId    关联的模板id
      * @return 持久化后的文件元数据
      */
-    FileInfo uploadFileAndSubmitTask(MultipartFile file, Long userId, String promptContent);
+    FileInfo uploadFileAndSubmitTask(MultipartFile file, Long userId, String promptContent,Long templateId);
 
     /**
      * 确认预签名上传完成并提交处理任务到消息队列。

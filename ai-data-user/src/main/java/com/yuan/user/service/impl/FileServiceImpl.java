@@ -308,14 +308,15 @@ public class FileServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
      * @param file          上传文件
      * @param userId        上传用户 ID
      * @param promptContent 用户分析需求描述（可选，如"分析各区域季度销售趋势"）
+     * @param templateId    关联的模板id
      * @return 持久化后的文件元数据
      */
     @Override
-    public FileInfo uploadFileAndSubmitTask(MultipartFile file, Long userId, String promptContent) {
+    public FileInfo uploadFileAndSubmitTask(MultipartFile file, Long userId, String promptContent,Long templateId) {
         // 1. 上传文件到存储并持久化元数据
         FileInfo fileInfo = uploadFile(file, userId);
         // 2. 发送 ETL 处理消息到消息队列
-        sendFileProcessMessage(fileInfo, promptContent);
+        sendFileProcessMessage(fileInfo, promptContent,templateId);
         return fileInfo;
     }
 
@@ -342,16 +343,18 @@ public class FileServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
      * 发送文件处理消息到 RabbitMQ（本地消息表模式）。
      * @param fileInfo      文件元数据
      * @param promptContent 用户分析需求描述（可选）
+     * @param templateId    关联的模板id
      */
-    private void sendFileProcessMessage(FileInfo fileInfo, String promptContent) {
+    private void sendFileProcessMessage(FileInfo fileInfo, String promptContent,Long templateId) {
         validateMessageFileInfo(fileInfo);
         try {
             //1. 通过 TaskInfoService proxy 在事务中创建待发送任务记录。
-            TaskInfo taskInfo = taskInfoService.createPendingTask(fileInfo, promptContent);
+            TaskInfo taskInfo = taskInfoService.createPendingTask(fileInfo, promptContent, templateId);
             //2. 构建 FileProcessMessage 并发送到 MQ。
             FileProcessMessage message = new FileProcessMessage(
                     taskInfo.getTaskId(),
                     fileInfo.getId(),
+                    templateId,
                     fileInfo.getStoragePath(),
                     fileInfo.getStorageType(),
                     fileInfo.getFileName(),

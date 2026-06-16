@@ -50,9 +50,10 @@ public class FileController {
      */
     @PostMapping("/upload")
     public BaseResponse<FileInfoVO> upload(@RequestParam("file") MultipartFile file,
+                                           @RequestParam("templateId") Long templateId,
                                            @RequestParam(value = "promptContent", required = false) String promptContent) {
         Long userId = Long.parseLong(UserContext.getUserId());
-        FileInfo fileInfo = fileService.uploadFileAndSubmitTask(file, userId, promptContent);
+        FileInfo fileInfo = fileService.uploadFileAndSubmitTask(file, userId, promptContent,templateId);
         return ResultUtils.success(toVO(fileInfo));
     }
 
