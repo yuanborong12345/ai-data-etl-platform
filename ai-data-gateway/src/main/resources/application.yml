@@ -1,4 +1,3 @@
-# 端口配置
 server:
   port: 8000
 # 网关配置
@@ -36,26 +35,6 @@ spring:
           uri: lb://ai-data-monitor
           predicates:
             - Path=/api/monitor/**
-# swagger 文档配置
-knife4j:
-  gateway:
-    enabled: true
-    strategy: manual
-    routes:
-      - name: 用户服务
-        service-name: ai-data-user
-        # 【核心魔法】：直接请求网关的业务路径，网关透传给后端，后端带着 context-path 完美接客！
-        url: /api/user/v3/api-docs
-        context-path: /api/user
-        order: 1
-      - name: 智能服务
-        service-name: ai-data-intelligence
-        url: /api/intelligence/v3/api-docs
-        order: 2
-      - name: 监控服务
-        service-name: ai-data-monitor
-        url: /api/monitor/v3/api-docs
-        order: 3
-# jwt 配置
+
 jwt:
   secret: ${JWT_SECRET_KEY}
