@@ -54,6 +54,7 @@ public class MqMessageRetryScheduler {
                 FileProcessMessage message = new FileProcessMessage(
                         task.getTaskId(),
                         fileInfo.getId(),
+                        task.getTemplateId(),
                         fileInfo.getStoragePath(),
                         fileInfo.getStorageType(),
                         fileInfo.getFileName(),

@@ -128,8 +128,9 @@ public class FileController {
     @PostMapping("/{id}/confirm")
     public BaseResponse<FileInfoVO> confirmUpload(
             @PathVariable Long id,
+            @RequestParam("templateId") Long templateId,
             @RequestParam(value = "promptContent", required = false) String promptContent) {
-        FileInfo fileInfo = fileService.confirmUploadAndSubmitTask(id, promptContent);
+        FileInfo fileInfo = fileService.confirmUploadAndSubmitTask(id, promptContent,templateId);
         return ResultUtils.success(toVO(fileInfo));
     }
 

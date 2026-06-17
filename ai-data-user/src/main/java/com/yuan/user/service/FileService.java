@@ -126,5 +126,5 @@ public interface FileService extends IService<FileInfo> {
      * @param promptContent 用户分析需求描述（可选，如"分析各区域季度销售趋势"）
      * @return 更新后的文件元数据
      */
-    FileInfo confirmUploadAndSubmitTask(Long fileId, String promptContent);
+    FileInfo confirmUploadAndSubmitTask(Long fileId, String promptContent,Long templateId);
 }

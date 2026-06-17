@@ -331,11 +331,11 @@ public class FileServiceImpl extends ServiceImpl<FileInfoMapper, FileInfo>
      * @return 更新后的文件元数据
      */
     @Override
-    public FileInfo confirmUploadAndSubmitTask(Long fileId, String promptContent) {
+    public FileInfo confirmUploadAndSubmitTask(Long fileId, String promptContent ,Long templateId) {
         // 1. 确认预签名上传并回填元数据
         FileInfo fileInfo = confirmUpload(fileId);
         // 2. 发送 ETL 处理消息到消息队列
-        sendFileProcessMessage(fileInfo, promptContent);
+        sendFileProcessMessage(fileInfo, promptContent,templateId);
         return fileInfo;
     }
 
