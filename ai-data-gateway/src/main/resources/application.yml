@@ -13,28 +13,22 @@ spring:
         namespace: ${NACOS_NAMESPACE}
         group: ${NACOS_GROUP}
     gateway:
-      routes:
-        # ==========================================
-        # user 服务业务路由
-        # ==========================================
-        - id: ai-data-user
-          uri: lb://ai-data-user
-          predicates:
-            - Path=/api/user/**
-        # ==========================================
-        # intelligence 服务业务路由
-        # ==========================================
-        - id: ai-data-intelligence
-          uri: lb://ai-data-intelligence
-          predicates:
-            - Path=/api/intelligence/**
-        # ==========================================
-        # monitor 服务业务路由
-        # ==========================================
-        - id: ai-data-monitor
-          uri: lb://ai-data-monitor
-          predicates:
-            - Path=/api/monitor/**
+      server:
+        webflux:
+          routes:
+            # ==========================================
+            # user 服务业务路由
+            # ==========================================
+            - id: ai-data-user
+              uri: lb://ai-data-user
+              predicates:
+                - Path=/api/user/**
+              filters:
+                - StripPrefix=1
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.cloud.loadbalancer: TRACE
 
 jwt:
   secret: ${JWT_SECRET_KEY}

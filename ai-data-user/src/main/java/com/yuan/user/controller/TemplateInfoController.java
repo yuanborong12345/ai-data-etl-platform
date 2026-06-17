@@ -28,49 +28,49 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/template")
 @Slf4j
 public class TemplateInfoController {
 
     @Resource
     private TemplateInfoService templateInfoService;
 
-    @PostMapping("/template/create")
+    @PostMapping("/create")
     public BaseResponse<Long> createTemplate(@Valid @RequestBody TemplateCreateRequest templateCreateRequest) {
         Long templateId = templateInfoService.createTemplate(templateCreateRequest);
         return ResultUtils.success(templateId);
     }
 
-    @GetMapping("/template/{id}")
+    @GetMapping("/{id}")
     public BaseResponse<TemplateInfoVO> getTemplateById(@PathVariable(value = "id") Long id) {
         return ResultUtils.success(templateInfoService.getTemplateById(id));
     }
 
-    @PostMapping("/template/list")
+    @PostMapping("/list")
     public BaseResponse<List<TemplateInfoVO>> listTemplateByPage(@RequestBody TemplateQueryRequest request) {
         return ResultUtils.success(templateInfoService.listTemplateByPage(request));
     }
 
-    @PostMapping("/template/audit")
+    @PostMapping("/audit")
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
     public BaseResponse<String> auditTemplate(@Valid @RequestBody TemplateAuditRequest request) {
         templateInfoService.auditTemplate(request);
         return ResultUtils.success("ok");
     }
 
-    @PostMapping("/template/update")
+    @PostMapping("/update")
     public BaseResponse<String> updateTemplate(@Valid @RequestBody TemplateUpdateRequest request) {
         templateInfoService.updateTemplate(request);
         return ResultUtils.success("ok");
     }
 
-    @DeleteMapping("/template/{id}")
+    @DeleteMapping("/{id}")
     public BaseResponse<String> deleteTemplate(@PathVariable(value = "id") Long id) {
         templateInfoService.deleteTemplate(id);
         return ResultUtils.success("ok");
     }
 
-    @GetMapping("/template/download/{id}")
+    @GetMapping("/download/{id}")
     public void downloadTemplate(@PathVariable("id") Long id, HttpServletResponse response) {
         try{
             if(id == null || id <= 0){

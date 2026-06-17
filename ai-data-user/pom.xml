@@ -51,11 +51,7 @@
             <groupId>com.yuan</groupId>
             <artifactId>ai-data-model</artifactId>
         </dependency>
-        <!-- 聚合文档 -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-        </dependency>
+
         <!-- MinIO Java SDK -->
         <dependency>
             <groupId>io.minio</groupId>

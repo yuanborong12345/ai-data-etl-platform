@@ -42,13 +42,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
     private static final List<String> WHITE_LIST = Arrays.asList(
             "/api/user/login",
-            "/api/user/register",
-            "/**/v3/api-docs/**",
-            "/swagger-ui.html",
-            "/swagger-ui/**",
-            "/doc.html",
-            "/webjars/**",
-            "/swagger-resources/**"
+            "/api/user/register"
     );
 
     private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();

@@ -1,7 +1,5 @@
 server:
   port: 8010
-  servlet:
-    context-path: /api/user
 spring:
   profiles:
     active: dev

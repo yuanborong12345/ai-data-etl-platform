@@ -32,10 +32,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-        </dependency>
+
         <!-- Common Module -->
         <dependency>
             <groupId>com.yuan</groupId>
@@ -45,6 +42,16 @@
         <dependency>
             <groupId>com.yuan</groupId>
             <artifactId>ai-data-model</artifactId>
+        </dependency>
+        <!-- Service Client (Feign) -->
+        <dependency>
+            <groupId>com.yuan</groupId>
+            <artifactId>ai-data-service-client</artifactId>
+        </dependency>
+        <!--负载均衡-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
         <!-- Test -->
         <dependency>

@@ -15,7 +15,12 @@
         <!-- Spring Cloud Gateway -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-gateway</artifactId>
+            <artifactId>spring-cloud-gateway-server-webflux</artifactId>
+        </dependency>
+        <!-- 响应式 Web 容器 (Netty)，spring-cloud-gateway-server-webflux 不再传递引入 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
         <!--负载均衡-->
         <dependency>
@@ -32,7 +37,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
         </dependency>
-        <!--聚合文档-->
+
         <!-- 公共模块 -->
         <dependency>
             <groupId>com.yuan</groupId>
