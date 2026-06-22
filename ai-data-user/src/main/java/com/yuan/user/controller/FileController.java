@@ -15,6 +15,8 @@ import com.yuan.utils.UserContext;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -91,6 +93,19 @@ public class FileController {
              var is = object.getInputStream()) {
             StreamUtils.copy(is, os);
         }
+    }
+
+    /**
+     * 下载文件内容（供 processor 等服务间 Feign 调用）。
+     */
+    @GetMapping("/{id}/inner/download")
+    public ResponseEntity<byte[]> download(@PathVariable Long id) throws IOException {
+        FileStorageObject object = fileService.downloadObject(id);
+        byte[] content = object.getInputStream().readAllBytes();
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(content.length)
+                .body(content);
     }
 
     /**

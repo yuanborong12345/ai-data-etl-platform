@@ -93,3 +93,16 @@ create table if not exists task_info
     INDEX idx_user_status_createTime (userId, status, createTime),
     INDEX idx_mq_status_retry (mqSendStatus, createTime, mqRetryCount)
 ) comment '任务信息表' collate = utf8mb4_unicode_ci;
+
+-- 解析数据表：通用 JSON 行存储，按 taskId 关联
+create table if not exists parse_data
+(
+    id               bigint auto_increment comment '主键ID' primary key,
+    taskId           varchar(64)                            not null comment '任务ID（UUID）',
+    rowIndex         int                                    not null comment '行号（0-based）',
+    rowData          json                                   not null comment '结构化行数据 {fieldKey: value}',
+    isValid          tinyint      default 1                 not null comment '是否有效：1有效 0无效',
+    validationError  varchar(512)                           null comment '校验错误信息',
+    createTime       datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
+    INDEX idx_taskId (taskId)
+) comment '解析数据表' collate = utf8mb4_unicode_ci;

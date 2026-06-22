@@ -55,10 +55,10 @@ public class RabbitConfig {
             }
             if (ack) {
                 taskInfoService.updateMqSendStatus(taskId, 1, null, null);
-                log.info("MQ消息投递成功，taskId={}", taskId);
+                log.info("文件处理MQ消息投递成功，taskId={}", taskId);
             } else {
                 taskInfoService.updateMqSendStatus(taskId, 2, null, new Date());
-                log.error("MQ消息投递失败，taskId={}，cause={}", taskId, cause);
+                log.error("文件处理MQ消息投递失败，taskId={}，cause={}", taskId, cause);
             }
         };
     }

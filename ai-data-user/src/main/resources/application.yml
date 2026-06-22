@@ -1,5 +1,7 @@
 server:
   port: 8010
+  servlet:
+    context-path: /user
 spring:
   profiles:
     active: dev
@@ -22,12 +24,15 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
-      timeout: 3000ms
+      timeout: 30000ms
       lettuce:
+        client-options:
+          ping-before-activate-connection: true
         pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
+          max-active: 32
+          max-idle: 16
+          min-idle: 8
+          max-wait: 3000ms
   rabbitmq:
     host: ${RABBIT_MQ_HOST}
     port: ${RABBIT_MQ_PORT}

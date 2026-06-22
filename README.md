@@ -2,21 +2,6 @@
 
 基于 Spring Cloud Alibaba 微服务架构的 AI 数据解析与智能分析平台。
 
-模板创建（用户端）：用户在网页上通过可视化界面，动态添加列（定义中文列名、英文Key、数据类型、是否必填）。后端将这些元数据以 JSON 格式保存，不生成物理文件。
-JSON示例： 
-[
-{"columnIndex": 0, "headerName": "序号", "fieldKey": "id", "dataType": "int", "required": true},
-{"columnIndex": 1, "headerName": "商品内容", "fieldKey": "content", "dataType": "string", "required": true},
-{"columnIndex": 2, "headerName": "商品价格", "fieldKey": "price", "dataType": "double", "required": false}
-]
-模板审核（管理端）：管理员对用户提交的动态模板进行审核（通过/驳回），只有通过的模板才能被公开下载。
-模板下载（动态生成）：用户选择某个通过的模板点击下载。后端读取数据库中的 JSON 结构，利用 EasyExcel 实时在内存中构建出一个标准的空 Excel 文件流返回给用户。
-文件上传与校验（用户端）：用户下载模板填好数据后上传，并输入 Prompt。后端依据模板的 JSON 结构，严格校验上传的 Excel 表头和数据格式。
-异步 AI 分析（后台 Worker）：
-文件上传成功后立即返回 taskId，前端进入轮询或等待状态。
-后台异步将 Excel 数据转化为结构化的 JSON 数组，拼装 Prompt 后调用大模型 API。
-处理完成后，更新任务状态，并持久化保存 AI 返回的分析文本或报表结果。
-
 ## 项目架构
 
 ```
