@@ -29,6 +29,8 @@ public class RabbitConfig {
     @Bean
     public Queue tokenBillingQueue() {
         return QueueBuilder.durable(MqConstant.QUEUE_TOKEN_BILLING)
+                .withArgument("x-dead-letter-exchange", MqConstant.EXCHANGE_DLX)
+                .withArgument("x-dead-letter-routing-key", MqConstant.RK_DEAD_LETTER)
                 .build();
     }
 

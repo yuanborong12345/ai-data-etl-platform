@@ -63,7 +63,7 @@ public class FileController {
      * 获取文件元数据。
      */
     @GetMapping("/{id}")
-    public BaseResponse<FileInfoVO> getFileInfo(@PathVariable Long id) {
+    public BaseResponse<FileInfoVO> getFileInfo(@PathVariable("id") Long id) {
         FileInfo fileInfo = fileService.getFileInfo(id);
         return ResultUtils.success(toVO(fileInfo));
     }
@@ -72,7 +72,7 @@ public class FileController {
      * 服务端直接下载文件（流式传输）。
      */
     @GetMapping("/{id}/download")
-    public void download(@PathVariable Long id, HttpServletResponse response) throws IOException {
+    public void download(@PathVariable("id") Long id, HttpServletResponse response) throws IOException {
         FileInfo fileInfo = fileService.getFileInfo(id);
         FileStorageObject object = fileService.downloadObject(id);
 
@@ -99,7 +99,7 @@ public class FileController {
      * 下载文件内容（供 processor 等服务间 Feign 调用）。
      */
     @GetMapping("/{id}/inner/download")
-    public ResponseEntity<byte[]> download(@PathVariable Long id) throws IOException {
+    public ResponseEntity<byte[]> download(@PathVariable("id") Long id) throws IOException {
         FileStorageObject object = fileService.downloadObject(id);
         byte[] content = object.getInputStream().readAllBytes();
         return ResponseEntity.ok()
@@ -128,7 +128,7 @@ public class FileController {
      */
     @GetMapping("/{id}/presigned/download")
     public BaseResponse<PresignedDownloadResult> createDownloadPresigned(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam(value = "expires", required = false) Long expiresSeconds) {
         Duration expires = expiresSeconds != null ? Duration.ofSeconds(expiresSeconds) : null;
         PresignedDownloadResult result = fileService.createDownloadPresigned(id, expires);
@@ -142,7 +142,7 @@ public class FileController {
      */
     @PostMapping("/{id}/confirm")
     public BaseResponse<FileInfoVO> confirmUpload(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam("templateId") Long templateId,
             @RequestParam(value = "promptContent", required = false) String promptContent) {
         FileInfo fileInfo = fileService.confirmUploadAndSubmitTask(id, promptContent,templateId);
@@ -154,7 +154,7 @@ public class FileController {
      */
     @DeleteMapping("/{id}")
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
-    public BaseResponse<Boolean> delete(@PathVariable Long id) {
+    public BaseResponse<Boolean> delete(@PathVariable("id") Long id) {
         boolean result = fileService.deleteFile(id);
         return ResultUtils.success(result);
     }
@@ -164,7 +164,7 @@ public class FileController {
      */
     @PostMapping("/{id}/promote")
     @AuthCheck(mustRole = UserConstant.ROLE_ADMIN)
-    public BaseResponse<FileInfoVO> promote(@PathVariable Long id) {
+    public BaseResponse<FileInfoVO> promote(@PathVariable("id") Long id) {
         FileInfo fileInfo = fileService.promoteFile(id);
         return ResultUtils.success(toVO(fileInfo));
     }

@@ -24,8 +24,6 @@ import java.util.List;
 @Component
 public class MqMessageRetryScheduler {
 
-    private static final int DEFAULT_MAX_RETRY_COUNT = 3;
-
     @Resource
     private TaskInfoService taskInfoService;
 

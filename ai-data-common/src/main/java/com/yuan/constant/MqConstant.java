@@ -32,6 +32,17 @@ public interface MqConstant {
     /** Token 计费路由键 */
     String RK_TOKEN_BILLING = "ai-data.rk.token.billing";
 
+    // ======================== 死信队列 ========================
+
+    /** 死信交换机 */
+    String EXCHANGE_DLX = "ai-data.dlx";
+
+    /** 死信队列 */
+    String QUEUE_DEAD_LETTER = "ai-data.queue.dead.letter";
+
+    /** 死信路由键 */
+    String RK_DEAD_LETTER = "ai-data.rk.dead.letter";
+
     // ======================== 通用 ========================
     Integer DEFAULT_MAX_RETRY_COUNT = 3;
 }
