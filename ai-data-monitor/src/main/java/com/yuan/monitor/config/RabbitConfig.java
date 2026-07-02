@@ -2,6 +2,7 @@ package com.yuan.monitor.config;
 
 import com.yuan.constant.MqConstant;
 import org.springframework.amqp.core.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,7 +38,8 @@ public class RabbitConfig {
     /* ======================== 绑定关系 ======================== */
 
     @Bean
-    public Binding tokenBillingBinding(Queue tokenBillingQueue, DirectExchange dataExchange) {
+    public Binding tokenBillingBinding(@Qualifier("tokenBillingQueue") Queue tokenBillingQueue,
+                                        @Qualifier("dataExchange") DirectExchange dataExchange) {
         return BindingBuilder.bind(tokenBillingQueue)
                 .to(dataExchange)
                 .with(MqConstant.RK_TOKEN_BILLING);

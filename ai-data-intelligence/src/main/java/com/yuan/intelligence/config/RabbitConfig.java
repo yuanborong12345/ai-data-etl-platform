@@ -2,6 +2,7 @@ package com.yuan.intelligence.config;
 
 import com.yuan.constant.MqConstant;
 import org.springframework.amqp.core.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,7 +38,8 @@ public class RabbitConfig {
     /* ======================== 绑定关系 ======================== */
 
     @Bean
-    public Binding dataAnalysisBinding(Queue dataAnalysisQueue, DirectExchange dataExchange) {
+    public Binding dataAnalysisBinding(@Qualifier("dataAnalysisQueue") Queue dataAnalysisQueue,
+                                        @Qualifier("dataExchange") DirectExchange dataExchange) {
         return BindingBuilder.bind(dataAnalysisQueue)
                 .to(dataExchange)
                 .with(MqConstant.RK_DATA_ANALYSIS);
