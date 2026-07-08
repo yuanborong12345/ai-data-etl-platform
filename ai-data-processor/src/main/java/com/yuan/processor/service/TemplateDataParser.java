@@ -1,5 +1,6 @@
 package com.yuan.processor.service;
 
+import cn.hutool.core.io.FileTypeUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -51,9 +52,10 @@ public class TemplateDataParser {
     }
 
     /**
-     * 按模板解析文件（根据内容 magic bytes 自动识别 xlsx / csv，失败时回退）。
+     * 按模板解析文件（根据 magic bytes 识别 xlsx，根据后缀识别 csv）。
      */
     public ParseResult parse(InputStream inputStream, Long templateId, String fileName) {
+        // 1.获取并解析模板
         TemplateInfoVO template = templateFeignClient.getTemplateById(templateId).getData();
         if (template == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "模板不存在: " + templateId);
@@ -62,33 +64,55 @@ public class TemplateDataParser {
         schemaList.sort(Comparator.comparing(TemplateSchemaDTO::getColumnIndex));
         log.info("模板 [{}] 加载完成，共 {} 列定义", template.getTemplateName(), schemaList.size());
 
-        // 一次性读入内存，避免流被消费后无法回退
-        byte[] content;
-        try {
-            content = inputStream.readAllBytes();
-        } catch (IOException e) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "读取文件内容失败: " + e.getMessage());
-        }
-        log.info("文件 {} 大小: {} bytes, 前4字节(hex): {}", fileName, content.length,
-                content.length >= 4 ? String.format("%02X %02X %02X %02X", content[0], content[1], content[2], content[3]) : "不足4字节");
+        // 2.从输入流读取文件内容
+        byte[] content = getBytesByInputStream(inputStream);
 
-        // 检测是否为 JSON 错误响应（下载失败时服务端返回的 BaseResponse）
+        // 3.文件校验
+        log.info("文件 {} 大小: {} bytes", fileName, content.length);
         if (content.length > 0 && content[0] == '{') {
             String body = new String(content, StandardCharsets.UTF_8);
             log.error("文件下载返回了 JSON 而非文件内容，请检查 user 模块日志: {}", body);
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "文件下载失败，服务端返回了错误响应");
         }
 
-        boolean isXlsx = content.length >= 4 && content[0] == 0x50 && content[1] == 0x4B;
+        //4. 根据模板解析文件
+        return pareFileByFileType(content,schemaList,fileName);
+    }
 
-        if (isXlsx) {
-            try {
-                return parseExcel(new ByteArrayInputStream(content), schemaList);
-            } catch (Exception e) {
-                log.warn("EasyExcel 解析失败，回退到宽松 CSV 模式: {}", e.getMessage());
-            }
+    /**
+     * 从输入流读取文件内容
+     */
+    private static byte[] getBytesByInputStream(InputStream inputStream) {
+        byte[] content;
+        try {
+            content = inputStream.readAllBytes();
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "读取文件内容失败: " + e.getMessage());
         }
-        return parseCsv(new ByteArrayInputStream(content), schemaList);
+        return content;
+    }
+
+    /**
+     * 根据文件类型解析文件
+     */
+    private ParseResult pareFileByFileType(byte[] content, List<TemplateSchemaDTO> schemaList, String fileName){
+        String fileType = FileTypeUtil.getType(new ByteArrayInputStream(content),true);
+        log.info("文件类型检测结果: {}", fileType);
+
+        if ("xlsx".equals(fileType) || "xls".equals(fileType)|| ("zip").equals(fileType) && fileName.toLowerCase().endsWith(".xlsx")) {
+            return parseExcel(new ByteArrayInputStream(content), schemaList);
+        }
+
+        if ("zip".equals(fileType)) {
+            log.error("安全拦截：用户上传了真正的 ZIP 压缩包，而非 Excel 文件");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请上传标准的 Excel 文件，勿上传压缩包");
+        }
+
+        if ("csv".equals(fileType) || "txt".equals(fileType) || fileType == null) {
+            return parseCsv(new ByteArrayInputStream(content), schemaList);
+        }
+
+        throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件格式，仅支持 .xlsx / .xls / .csv: " + fileName);
     }
 
     /**
