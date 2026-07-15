@@ -30,12 +30,13 @@ public class ProcessFileConsumer {
             // 1. 远程下载文件
             InputStream fileStream = fileDownloadService.download(message.getFileId());
 
-            // 2. 按模板解析文件
-            ParseResult parseResult = templateDataParser.parse(fileStream, message.getTemplateId(), message.getFileName());
+            // 2. 流式解析 + 分批异步落库
+            ParseResult parseResult = templateDataParser.parse(
+                    fileStream, message.getTemplateId(), message.getFileName(), message.getTaskId());
             log.info("【消费者】解析完成: taskId={}, totalRows={}, validRows={}, errorRows={}",
-                    message.getTaskId(), parseResult.rows().size(), parseResult.validRows(), parseResult.errorRows());
+                    message.getTaskId(), parseResult.totalRows(), parseResult.validRows(), parseResult.errorRows());
 
-            // 3. 存储解析结果
+            // 3. 更新任务状态
             parseResultService.save(message.getTaskId(), parseResult);
 
             // TODO 4. 发送 DataAnalysisMessage 到下一队列（后续步骤）

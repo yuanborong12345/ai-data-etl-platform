@@ -4,12 +4,16 @@ import cn.hutool.core.io.FileTypeUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.yuan.common.ErrorCode;
 import com.yuan.exception.BusinessException;
 import com.yuan.model.dto.template.TemplateSchemaDTO;
+import com.yuan.model.entity.ParseData;
 import com.yuan.model.vo.TemplateInfoVO;
+import com.yuan.processor.service.ParseBatchWriter.BatchSession;
 import com.yuan.serviceclient.feign.TemplateFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
@@ -27,35 +31,48 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 模板驱动的文件解析器。
  *
- * <p>根据模板 schema 按列读取 Excel，校验数据并输出结构化结果。</p>
+ * 流式读取 + 固定大小缓冲区 + 线程池异步分批落库。
+ * 主线程负责 EasyExcel 流式解析，线程池负责 DB 写入，两者并行。
+ * CallerRunsPolicy 在队列满时让主线程直接执行 insert，天然背压。
  */
 @Slf4j
 @Service
 public class TemplateDataParser {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final int BATCH_SIZE = 500;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
 
     private final TemplateFeignClient templateFeignClient;
+    private final ParseBatchWriter batchWriter;
 
-    public TemplateDataParser(TemplateFeignClient templateFeignClient) {
+    public TemplateDataParser(TemplateFeignClient templateFeignClient,
+                              ParseBatchWriter batchWriter) {
         this.templateFeignClient = templateFeignClient;
+        this.batchWriter = batchWriter;
     }
 
     /**
-     * 按模板解析文件（根据 magic bytes 识别 xlsx，根据后缀识别 csv）。
+     * 按模板解析文件。
+     *
+     * @param inputStream 文件输入流
+     * @param templateId  模板 ID
+     * @param fileName    原始文件名（用于类型检测）
+     * @param taskId      任务 ID（写入 ParseData 时关联）
+     * @return 解析结果（仅含元数据，不含全量行数据）
      */
-    public ParseResult parse(InputStream inputStream, Long templateId, String fileName) {
-        // 1.获取并解析模板
+    public ParseResult parse(InputStream inputStream, Long templateId, String fileName, String taskId) {
         TemplateInfoVO template = templateFeignClient.getTemplateById(templateId).getData();
         if (template == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "模板不存在: " + templateId);
@@ -64,92 +81,102 @@ public class TemplateDataParser {
         schemaList.sort(Comparator.comparing(TemplateSchemaDTO::getColumnIndex));
         log.info("模板 [{}] 加载完成，共 {} 列定义", template.getTemplateName(), schemaList.size());
 
-        // 2.从输入流读取文件内容
         byte[] content = getBytesByInputStream(inputStream);
-
-        // 3.文件校验
         log.info("文件 {} 大小: {} bytes", fileName, content.length);
         if (content.length > 0 && content[0] == '{') {
             String body = new String(content, StandardCharsets.UTF_8);
-            log.error("文件下载返回了 JSON 而非文件内容，请检查 user 模块日志: {}", body);
+            log.error("文件下载返回了 JSON 而非文件内容: {}", body);
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "文件下载失败，服务端返回了错误响应");
         }
 
-        //4. 根据模板解析文件
-        return pareFileByFileType(content,schemaList,fileName);
+        return parseFileByFileType(content, schemaList, fileName, taskId);
     }
 
-    /**
-     * 从输入流读取文件内容
-     */
     private static byte[] getBytesByInputStream(InputStream inputStream) {
-        byte[] content;
         try {
-            content = inputStream.readAllBytes();
+            return inputStream.readAllBytes();
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "读取文件内容失败: " + e.getMessage());
         }
-        return content;
     }
 
-    /**
-     * 根据文件类型解析文件
-     */
-    private ParseResult pareFileByFileType(byte[] content, List<TemplateSchemaDTO> schemaList, String fileName){
-        String fileType = FileTypeUtil.getType(new ByteArrayInputStream(content),true);
+    private ParseResult parseFileByFileType(byte[] content, List<TemplateSchemaDTO> schemaList,
+                                             String fileName, String taskId) {
+        String fileType = FileTypeUtil.getType(new ByteArrayInputStream(content), true);
         log.info("文件类型检测结果: {}", fileType);
 
-        if ("xlsx".equals(fileType) || "xls".equals(fileType)|| ("zip").equals(fileType) && fileName.toLowerCase().endsWith(".xlsx")) {
-            return parseExcel(new ByteArrayInputStream(content), schemaList);
+        if ("xlsx".equals(fileType) || "xls".equals(fileType)
+                || ("zip".equals(fileType) && fileName.toLowerCase().endsWith(".xlsx"))) {
+            return parseExcel(new ByteArrayInputStream(content), schemaList, taskId);
         }
 
         if ("zip".equals(fileType)) {
-            log.error("安全拦截：用户上传了真正的 ZIP 压缩包，而非 Excel 文件");
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请上传标准的 Excel 文件，勿上传压缩包");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,
+                    "请上传标准的 Excel 文件，勿上传压缩包");
         }
 
         if ("csv".equals(fileType) || "txt".equals(fileType) || fileType == null) {
-            return parseCsv(new ByteArrayInputStream(content), schemaList);
+            return parseCsv(new ByteArrayInputStream(content), schemaList, taskId);
         }
 
-        throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的文件格式，仅支持 .xlsx / .xls / .csv: " + fileName);
+        throw new BusinessException(ErrorCode.PARAMS_ERROR,
+                "不支持的文件格式，仅支持 .xlsx / .xls / .csv: " + fileName);
     }
 
-    /**
-     * EasyExcel 读取 xlsx。
-     */
-    private ParseResult parseExcel(InputStream inputStream, List<TemplateSchemaDTO> schemaList) {
-        List<Map<String, Object>> rows = new ArrayList<>();
-        List<String> parseErrors = new ArrayList<>();
+    /* ======================== Excel 解析 ======================== */
+
+    private ParseResult parseExcel(InputStream inputStream, List<TemplateSchemaDTO> schemaList,
+                                    String taskId) {
+        BatchSession session = batchWriter.newSession();
+        AtomicInteger errorCount = new AtomicInteger(0);
 
         EasyExcel.read(inputStream, new AnalysisEventListener<LinkedHashMap<Integer, String>>() {
+            private final List<ParseData> buffer = new ArrayList<>(BATCH_SIZE);
+
             @Override
             public void invoke(LinkedHashMap<Integer, String> rowData, AnalysisContext context) {
                 Integer rowIndex = context.readRowHolder().getRowIndex();
-                Map<String, Object> row = processRow(rowData, schemaList, rowIndex, parseErrors);
-                rows.add(row);
+                ParseData pd = buildParseData(rowData, schemaList, rowIndex, taskId, errorCount);
+                buffer.add(pd);
+
+                if (buffer.size() >= BATCH_SIZE) {
+                    flushBuffer();
+                }
+            }
+
+            private void flushBuffer() {
+                if (buffer.isEmpty()) return;
+                List<ParseData> snapshot = new ArrayList<>(buffer);
+                buffer.clear();
+                session.submitBatch(snapshot);
             }
 
             @Override
             public void doAfterAllAnalysed(AnalysisContext context) {
-                log.info("Excel 读取完成，共 {} 行", context.readSheetHolder().getApproximateTotalRowNumber());
+                flushBuffer();
+                session.awaitCompletion();
+                log.info("Excel 读取完成，共提交 {} 行", session.getSubmittedCount());
             }
         }).sheet().doRead();
 
-        return new ParseResult(schemaList, rows, parseErrors, rows.size() - parseErrors.size(), parseErrors.size());
+        int submitted = session.getSubmittedCount();
+        int err = errorCount.get();
+        return new ParseResult(schemaList, submitted - err, err, submitted);
     }
 
-    /**
-     * commons-csv 读取 csv，使用宽松模式容忍引号后空格等非标准格式。
-     */
-    private ParseResult parseCsv(InputStream inputStream, List<TemplateSchemaDTO> schemaList) {
-        List<Map<String, Object>> rows = new ArrayList<>();
-        List<String> parseErrors = new ArrayList<>();
+    /* ======================== CSV 解析 ======================== */
+
+    private ParseResult parseCsv(InputStream inputStream, List<TemplateSchemaDTO> schemaList,
+                                  String taskId) {
+        BatchSession session = batchWriter.newSession();
+        AtomicInteger errorCount = new AtomicInteger(0);
 
         CSVFormat format = CSVFormat.RFC4180
                 .withIgnoreSurroundingSpaces(true)
                 .withIgnoreEmptyLines(true)
                 .withTrim(true);
+
+        List<ParseData> buffer = new ArrayList<>(BATCH_SIZE);
 
         try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
              CSVParser parser = format.parse(reader)) {
@@ -160,55 +187,90 @@ public class TemplateDataParser {
                 for (int i = 0; i < record.size(); i++) {
                     rowData.put(i, record.get(i));
                 }
-                Map<String, Object> row = processRow(rowData, schemaList, rowIndex, parseErrors);
-                rows.add(row);
+                ParseData pd = buildParseData(rowData, schemaList, rowIndex, taskId, errorCount);
+                buffer.add(pd);
                 rowIndex++;
+
+                if (buffer.size() >= BATCH_SIZE) {
+                    List<ParseData> snapshot = new ArrayList<>(buffer);
+                    buffer.clear();
+                    session.submitBatch(snapshot);
+                }
             }
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "CSV 解析失败: " + e.getMessage());
         }
 
-        log.info("CSV 读取完成，共 {} 行", rows.size());
-        return new ParseResult(schemaList, rows, parseErrors, rows.size() - parseErrors.size(), parseErrors.size());
+        // flush remaining
+        if (!buffer.isEmpty()) {
+            session.submitBatch(new ArrayList<>(buffer));
+            buffer.clear();
+        }
+        session.awaitCompletion();
+
+        int submitted = session.getSubmittedCount();
+        int err = errorCount.get();
+        log.info("CSV 读取完成，共提交 {} 行", submitted);
+        return new ParseResult(schemaList, submitted - err, err, submitted);
     }
 
+    /* ======================== 单行处理 ======================== */
+
     /**
-     * 单行数据处理：必填校验 + 类型转换。
+     * 将一行原始数据转换为 ParseData，同时完成：
+     * - 必填校验 → isError=true 时设 isValid=0 + validationError
+     * - 类型转换 → 有效行序列化 rowData JSON
      */
-    private Map<String, Object> processRow(LinkedHashMap<Integer, String> rowData,
-                                           List<TemplateSchemaDTO> schemaList,
-                                           Integer rowIndex,
-                                           List<String> parseErrors) {
+    private ParseData buildParseData(LinkedHashMap<Integer, String> rowData,
+                                      List<TemplateSchemaDTO> schemaList,
+                                      Integer rowIndex,
+                                      String taskId,
+                                      AtomicInteger errorCount) {
+        ParseData pd = new ParseData();
+        pd.setTaskId(taskId);
+        pd.setRowIndex(rowIndex);
+        pd.setCreateTime(new Date());
+
         Map<String, Object> row = new LinkedHashMap<>();
+        List<String> rowErrors = new ArrayList<>();
+
         for (TemplateSchemaDTO col : schemaList) {
             String rawValue = rowData.getOrDefault(col.getColumnIndex(), "");
 
             if (Boolean.TRUE.equals(col.getRequired())
                     && (rawValue == null || rawValue.isBlank())) {
-                parseErrors.add(String.format("第%d行: [%s] 为必填字段", rowIndex + 1, col.getHeaderName()));
+                rowErrors.add(String.format("[%s] 为必填字段", col.getHeaderName()));
                 continue;
             }
 
             Object converted = convertType(rawValue, col.getDataType(), col.getHeaderName(), rowIndex);
             row.put(col.getFieldKey(), converted);
         }
-        return row;
+
+        if (!rowErrors.isEmpty()) {
+            pd.setRowData("{\"status\":\"error\"}");
+            pd.setIsValid(0);
+            pd.setValidationError(String.join("; ", rowErrors));
+            errorCount.incrementAndGet();
+        } else {
+            pd.setRowData(toJson(row));
+            pd.setIsValid(1);
+        }
+
+        return pd;
     }
 
-    /**
-     * 将 JSON schema 解析为 TemplateSchemaDTO 列表。
-     */
+    /* ======================== 工具方法 ======================== */
+
     private List<TemplateSchemaDTO> parseSchema(String templateSchema) {
         try {
-            return OBJECT_MAPPER.readValue(templateSchema, new TypeReference<List<TemplateSchemaDTO>>() {});
+            return OBJECT_MAPPER.readValue(templateSchema,
+                    new TypeReference<List<TemplateSchemaDTO>>() {});
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "模板 schema 解析失败: " + e.getMessage());
         }
     }
 
-    /**
-     * 类型转换。
-     */
     private Object convertType(String rawValue, String dataType, String headerName, Integer rowIndex) {
         if (rawValue == null || rawValue.isBlank()) {
             return null;
@@ -220,23 +282,31 @@ public class TemplateDataParser {
                 case "integer", "int", "long" -> Long.parseLong(rawValue.trim());
                 case "boolean", "bool" -> Boolean.parseBoolean(rawValue.trim());
                 case "date" -> LocalDate.parse(rawValue.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
-                case "datetime", "timestamp" -> LocalDateTime.parse(rawValue.trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                case "datetime", "timestamp" ->
+                        LocalDateTime.parse(rawValue.trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
                 default -> rawValue.trim();
             };
         } catch (Exception e) {
-            log.warn("第{}行: [{}] 类型转换失败, rawValue={}, dataType={}", rowIndex + 1, headerName, rawValue, type);
+            log.warn("第{}行: [{}] 类型转换失败, rawValue={}, dataType={}",
+                    rowIndex + 1, headerName, rawValue, type);
             return rawValue.trim();
         }
     }
 
-    /**
-     * 解析结果。
-     */
+    private static String toJson(Object obj) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "JSON 序列化失败");
+        }
+    }
+
+    /* ======================== 解析结果 ======================== */
+
     public record ParseResult(
             List<TemplateSchemaDTO> schema,
-            List<Map<String, Object>> rows,
-            List<String> errors,
             int validRows,
-            int errorRows
+            int errorRows,
+            int totalRows
     ) {}
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuan.processor.mapper.ParseDataMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO parse_data (taskId, rowIndex, rowData, isValid, validationError, createTime)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.taskId}, #{item.rowIndex}, #{item.rowData}, #{item.isValid},
+             #{item.validationError}, #{item.createTime})
+        </foreach>
+    </insert>
+</mapper>
