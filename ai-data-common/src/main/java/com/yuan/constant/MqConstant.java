@@ -18,9 +18,6 @@ public interface MqConstant {
     /** 数据分析队列：Processor → Intelligence（AI 分析入口） */
     String QUEUE_DATA_ANALYSIS = "ai-data.queue.data.analysis";
 
-    /** Token 计费队列：Intelligence → Monitor（审计入口） */
-    String QUEUE_TOKEN_BILLING = "ai-data.queue.token.billing";
-
     // ======================== Routing Keys ========================
 
     /** 文件处理路由键 */
@@ -28,9 +25,6 @@ public interface MqConstant {
 
     /** 数据分析路由键 */
     String RK_DATA_ANALYSIS = "ai-data.rk.data.analysis";
-
-    /** Token 计费路由键 */
-    String RK_TOKEN_BILLING = "ai-data.rk.token.billing";
 
     // ======================== 死信队列 ========================
 

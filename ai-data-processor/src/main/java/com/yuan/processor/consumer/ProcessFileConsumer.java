@@ -1,6 +1,7 @@
 package com.yuan.processor.consumer;
 
 import com.yuan.constant.MqConstant;
+import com.yuan.model.dto.processor.DataAnalysisMessage;
 import com.yuan.model.dto.processor.FileProcessMessage;
 import com.yuan.processor.service.FileDownloadService;
 import com.yuan.processor.service.ParseResultService;
@@ -8,8 +9,9 @@ import com.yuan.processor.service.TemplateDataParser;
 import com.yuan.processor.service.TemplateDataParser.ParseResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -22,6 +24,7 @@ public class ProcessFileConsumer {
     private final FileDownloadService fileDownloadService;
     private final TemplateDataParser templateDataParser;
     private final ParseResultService parseResultService;
+    private final RabbitTemplate rabbitTemplate;
 
     @RabbitListener(queues = MqConstant.QUEUE_FILE_PROCESS)
     public void processFileMessage(FileProcessMessage message) {
@@ -40,7 +43,20 @@ public class ProcessFileConsumer {
             // 3. 更新任务状态
             parseResultService.save(message.getTaskId(), parseResult);
 
-            // TODO 4. 发送 DataAnalysisMessage 到下一队列（后续步骤）
+            // 4. 发送数据分析消息到 Intelligence 模块
+            DataAnalysisMessage analysisMsg = new DataAnalysisMessage();
+            analysisMsg.setTaskId(message.getTaskId());
+            analysisMsg.setFileId(message.getFileId());
+            analysisMsg.setTemplateId(message.getTemplateId());
+            analysisMsg.setTemplateSchema(parseResult.schema());
+            analysisMsg.setUserId(message.getUserId());
+            analysisMsg.setPromptContent(message.getPromptContent());
+            analysisMsg.setTotalRows(parseResult.totalRows());
+            analysisMsg.setValidRows(parseResult.validRows());
+            analysisMsg.setErrorRows(parseResult.errorRows());
+            rabbitTemplate.convertAndSend(MqConstant.EXCHANGE_DATA,
+                    MqConstant.RK_DATA_ANALYSIS, analysisMsg);
+            log.info("【消费者】已发送数据分析消息: taskId={}", message.getTaskId());
 
             log.info("【消费者】文件处理完成: taskId={}", message.getTaskId());
         } catch (Exception e) {

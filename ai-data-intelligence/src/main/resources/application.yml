@@ -2,6 +2,8 @@ server:
   port: 8030
 
 spring:
+  profiles:
+    active: dev
   application:
     name: ai-data-intelligence
   cloud:
@@ -10,3 +12,17 @@ spring:
         server-addr: ${NACOS_HOST}:${NACOS_PORT}
         namespace: ${NACOS_NAMESPACE}
         group: ${NACOS_GROUP}
+  rabbitmq:
+    host: ${RABBIT_MQ_HOST}
+    port: ${RABBIT_MQ_PORT}
+    username: ${RABBIT_MQ_USER_NAME}
+    password: ${RABBIT_MQ_PASSWORD}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+jwt:
+  secret: ${JWT_SECRET_KEY}
