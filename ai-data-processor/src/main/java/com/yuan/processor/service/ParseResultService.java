@@ -3,6 +3,7 @@ package com.yuan.processor.service;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.yuan.model.entity.TaskInfo;
 import com.yuan.model.enums.TaskStatus;
+import com.yuan.processor.mapper.ParseDataMapper;
 import com.yuan.processor.mapper.TaskInfoMapper;
 import com.yuan.processor.service.TemplateDataParser.ParseResult;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,8 @@ import java.util.Date;
 /**
  * 解析结果持久化服务。
  *
- * <p>行数据的批量 insert 已在解析阶段由 {@link ParseBatchWriter} 异步完成，
- * 此处仅更新 TaskInfo 状态和解析时间戳。</p>
+ * 行数据的批量 insert 已在解析阶段由 {@link ParseBatchWriter} 异步完成，
+ * 此处仅更新 TaskInfo 状态和解析时间戳。
  */
 @Slf4j
 @Service
@@ -24,6 +25,7 @@ import java.util.Date;
 public class ParseResultService {
 
     private final TaskInfoMapper taskInfoMapper;
+    private final ParseDataMapper parseDataMapper;
 
     @Transactional(rollbackFor = Exception.class)
     public void save(String taskId, ParseResult parseResult) {
@@ -39,6 +41,9 @@ public class ParseResultService {
 
     @Transactional(rollbackFor = Exception.class)
     public void markFailed(String taskId, String errorMsg) {
+        int cleaned = parseDataMapper.deleteByTaskId(taskId);
+        log.info("清理部分落库数据: taskId={}, cleanedRows={}", taskId, cleaned);
+
         TaskInfo update = new TaskInfo();
         update.setStatus(TaskStatus.PARSE_FAILED);
         update.setErrorMsg(errorMsg);

@@ -25,6 +25,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PushbackInputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -51,6 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TemplateDataParser {
 
     private static final int BATCH_SIZE = 500;
+    private static final int MARK_LIMIT = 16384;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
@@ -77,17 +79,21 @@ public class TemplateDataParser {
 
         // 确保流支持 mark/reset，仅读文件头做类型检测，不读取全量内容
         InputStream is = inputStream.markSupported()
-                ? inputStream : new BufferedInputStream(inputStream, 8192);
-        is.mark(8192);
+                ? inputStream : new BufferedInputStream(inputStream, MARK_LIMIT);
+        is.mark(MARK_LIMIT);
 
         byte[] head = new byte[512];
         int headLen = is.read(head);
-        if (headLen > 0 && head[0] == '{') {
+        if (headLen <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件内容为空");
+        }
+        if (head[0] == '{') {
             String body = new String(head, 0, headLen, StandardCharsets.UTF_8);
             log.error("文件下载返回了 JSON 而非文件内容: {}", body);
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "文件下载失败，服务端返回了错误响应");
         }
         is.reset();
+        is.mark(MARK_LIMIT); // 重新标记以扩展 readlimit，防止后续 reset 失效
 
         String fileType = FileTypeUtil.getType(is);
         log.info("文件类型检测结果: {}, fileName={}", fileType, fileName);
@@ -170,7 +176,17 @@ public class TemplateDataParser {
 
             List<ParseData> buffer = new ArrayList<>(BATCH_SIZE);
 
-            try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+            // 处理 Windows Excel 导出的 UTF-8 BOM
+            PushbackInputStream pbIn = new PushbackInputStream(inputStream, 3);
+            byte[] bom = new byte[3];
+            int bomLen = pbIn.read(bom);
+            if (bomLen >= 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
+                log.info("CSV 文件包含 UTF-8 BOM，已自动跳过");
+            } else if (bomLen > 0) {
+                pbIn.unread(bom, 0, bomLen);
+            }
+
+            try (Reader reader = new InputStreamReader(pbIn, StandardCharsets.UTF_8);
                  CSVParser parser = format.parse(reader)) {
 
                 int rowIndex = 0;

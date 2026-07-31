@@ -36,6 +36,7 @@ public class RabbitConfig {
         return QueueBuilder.durable(MqConstant.QUEUE_FILE_PROCESS)
                 .withArgument("x-dead-letter-exchange", MqConstant.EXCHANGE_DLX)
                 .withArgument("x-dead-letter-routing-key", MqConstant.RK_DEAD_LETTER)
+                .withArgument("x-delivery-limit", MqConstant.DEFAULT_MAX_RETRY_COUNT)
                 .build();
     }
 

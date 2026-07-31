@@ -4,6 +4,7 @@ import com.yuan.common.ErrorCode;
 import com.yuan.exception.BusinessException;
 import com.yuan.model.entity.ParseData;
 import com.yuan.processor.mapper.ParseDataMapper;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +45,21 @@ public class ParseBatchWriter {
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
         this.executor.allowCoreThreadTimeOut(true);
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        log.info("ParseBatchWriter 线程池开始关闭...");
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                log.warn("线程池未在30秒内完成，强制关闭");
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
