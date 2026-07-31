@@ -9,6 +9,7 @@ import com.yuan.processor.service.TemplateDataParser.ParseResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -44,6 +45,12 @@ public class ProcessFileConsumer {
             log.info("【消费者】文件处理完成: taskId={}", message.getTaskId());
         } catch (Exception e) {
             log.error("【消费者】处理消息异常: taskId={}", message.getTaskId(), e);
+            try {
+                parseResultService.markFailed(message.getTaskId(), e.getMessage());
+            } catch (Exception dbEx) {
+                log.error("【消费者】更新任务失败状态异常: taskId={}", message.getTaskId(), dbEx);
+            }
+            throw new AmqpRejectAndDontRequeueException(e.getMessage(), e);
         }
     }
 }

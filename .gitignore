@@ -5,6 +5,10 @@ target/
 
 .env
 
+.claude
+
+.trellis/**
+AGENTS.md
 **/application-dev.yml
 
 ### IntelliJ IDEA ###

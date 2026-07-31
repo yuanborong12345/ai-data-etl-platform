@@ -1,9 +1,9 @@
 package com.yuan.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.yuan.model.enums.TaskStatus;
 import lombok.Data;
 
 import java.io.Serial;
@@ -39,8 +39,8 @@ public class TaskInfo implements Serializable {
     /** 用户输入的分析需求描述 */
     private String promptContent;
 
-    /** 任务状态：0上传中 1待解析 2解析中 3AI分析中 4完成 5失败 */
-    private Integer status;
+    /** 任务状态，见 {@link TaskStatus}：0上传中 1上传成功 2上传失败 3解析中 4解析成功 5解析失败 6分析中 7分析成功 8分析失败 */
+    private TaskStatus status;
 
     /** 失败原因 */
     private String errorMsg;

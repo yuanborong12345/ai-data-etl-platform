@@ -7,6 +7,7 @@ import com.yuan.common.ErrorCode;
 import com.yuan.exception.BusinessException;
 import com.yuan.model.entity.FileInfo;
 import com.yuan.model.entity.TaskInfo;
+import com.yuan.model.enums.TaskStatus;
 import com.yuan.user.mapper.TaskInfoMapper;
 import com.yuan.user.service.TaskInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class TaskInfoServiceImpl extends ServiceImpl<TaskInfoMapper, TaskInfo>
         taskInfo.setUserId(fileInfo.getUserId());
         taskInfo.setTemplateId(templateId);
         taskInfo.setPromptContent(promptContent);
-        taskInfo.setStatus(1);
+        taskInfo.setStatus(TaskStatus.UPLOAD_SUCCESS);
         taskInfo.setMqSendStatus(0);
         taskInfo.setMqRetryCount(0);
         taskInfo.setIsDelete(0);

@@ -57,21 +57,34 @@ public class ParseBatchWriter {
 
         private final List<Future<?>> futures = new ArrayList<>();
         private final AtomicInteger submittedCount = new AtomicInteger(0);
+        private volatile boolean completed;
 
-        /**
-         * 提交一批 ParseData 到线程池异步写入。
-         * 仅在 EasyExcel 读取线程中调用，无需同步。
-         */
         void submitBatch(List<ParseData> batch) {
             submittedCount.addAndGet(batch.size());
             futures.add(executor.submit(() -> parseDataMapper.insertBatch(batch)));
         }
 
         /**
-         * 等待本 session 所有异步任务完成。
-         * 在 doAfterAllAnalysed 回调结束时调用。
+         * 正常流程中等待所有批次写入完成。
          */
         void awaitCompletion() {
+            if (completed) return;
+            waitFutures();
+            completed = true;
+        }
+
+        /**
+         * finally 保底：防止异常时已提交的批次无人等待。
+         * 与 awaitCompletion 互斥（completed 标记），可安全重复调用。
+         */
+        void ensureCompleted() {
+            if (completed) return;
+            log.warn("解析异常，等待已提交批次写入完成...");
+            waitFutures();
+            completed = true;
+        }
+
+        private void waitFutures() {
             for (Future<?> f : futures) {
                 try {
                     f.get();

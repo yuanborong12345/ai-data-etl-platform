@@ -2,6 +2,7 @@ package com.yuan.processor.service;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.yuan.model.entity.TaskInfo;
+import com.yuan.model.enums.TaskStatus;
 import com.yuan.processor.mapper.TaskInfoMapper;
 import com.yuan.processor.service.TemplateDataParser.ParseResult;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +25,27 @@ public class ParseResultService {
 
     private final TaskInfoMapper taskInfoMapper;
 
-    /**
-     * 更新任务解析完成状态。
-     */
     @Transactional(rollbackFor = Exception.class)
     public void save(String taskId, ParseResult parseResult) {
         TaskInfo update = new TaskInfo();
+        update.setStatus(TaskStatus.PARSE_SUCCESS);
         update.setParseEndTime(new Date());
         taskInfoMapper.update(update,
                 new LambdaUpdateWrapper<TaskInfo>()
                         .eq(TaskInfo::getTaskId, taskId));
-        log.info("任务解析状态已更新: taskId={}, totalRows={}, validRows={}, errorRows={}",
+        log.info("任务解析成功: taskId={}, totalRows={}, validRows={}, errorRows={}",
                 taskId, parseResult.totalRows(), parseResult.validRows(), parseResult.errorRows());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void markFailed(String taskId, String errorMsg) {
+        TaskInfo update = new TaskInfo();
+        update.setStatus(TaskStatus.PARSE_FAILED);
+        update.setErrorMsg(errorMsg);
+        update.setParseEndTime(new Date());
+        taskInfoMapper.update(update,
+                new LambdaUpdateWrapper<TaskInfo>()
+                        .eq(TaskInfo::getTaskId, taskId));
+        log.info("任务解析失败: taskId={}, errorMsg={}", taskId, errorMsg);
     }
 }
